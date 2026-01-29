@@ -1,0 +1,157 @@
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Mail, Lock, LogIn } from "lucide-react";
+import Swal from "sweetalert2";
+import api from "../api/api";
+import { useAuth } from "../context/AuthContext";
+
+/**
+ * 🔐 LoginPage
+ * Pantalla de inicio de sesión con estilo Herbalife
+ */
+export default function LoginPage() {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+    const { login } = useAuth();
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!email || !password) {
+            Swal.fire({
+                icon: "warning",
+                title: "Campos requeridos",
+                text: "Por favor ingresa tu correo y contraseña",
+                confirmButtonColor: "#7CB342",
+            });
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const response = await api.post("/auth/login", {
+                email,
+                password,
+            });
+
+            const { token } = response.data;
+
+            // Obtener datos del usuario
+            api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+            const userResponse = await api.get("/auth/me");
+            const userData = userResponse.data;
+
+            // 🔒 Validar que el usuario sea ADMIN
+            const userRole = userData.rol?.nombre?.toUpperCase();
+            if (userRole !== "ADMIN") {
+                // Limpiar token si no es admin
+                delete api.defaults.headers.common["Authorization"];
+
+                Swal.fire({
+                    icon: "error",
+                    title: "Acceso denegado",
+                    text: "Este panel es exclusivo para administradores",
+                    confirmButtonColor: "#7CB342",
+                });
+                setLoading(false);
+                return;
+            }
+
+            login(token, userData);
+
+            Swal.fire({
+                icon: "success",
+                title: "¡Bienvenido!",
+                text: `Hola ${userData.nombre || "Administrador"}`,
+                confirmButtonColor: "#7CB342",
+                timer: 1500,
+                showConfirmButton: false,
+            });
+
+            navigate("/");
+        } catch (error) {
+            console.error("Error de login:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Error de autenticación",
+                text: error.response?.data?.message || "Credenciales incorrectas",
+                confirmButtonColor: "#7CB342",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-herbalife-green to-herbalife-dark p-4">
+            {/* Card de Login */}
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 transform transition-all duration-300 hover:scale-[1.02]">
+                {/* Header */}
+                <div className="text-center mb-8">
+                    <div className="w-20 h-20 bg-gradient-to-br from-herbalife-green to-herbalife-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <LogIn className="w-10 h-10 text-white" />
+                    </div>
+                    <h1 className="text-3xl font-bold text-gray-800">Bienvenido</h1>
+                    <p className="text-gray-500 mt-2">Inicia sesión en tu cuenta</p>
+                </div>
+
+                {/* Formulario */}
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Campo Email */}
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <Mail className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                            type="email"
+                            placeholder="Correo Electrónico"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:border-herbalife-green focus:ring-2 focus:ring-herbalife-green/20 outline-none transition-all duration-200 text-gray-700"
+                        />
+                    </div>
+
+                    {/* Campo Contraseña */}
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <Lock className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                            type="password"
+                            placeholder="Contraseña"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:border-herbalife-green focus:ring-2 focus:ring-herbalife-green/20 outline-none transition-all duration-200 text-gray-700"
+                        />
+                    </div>
+
+                    {/* Botón Ingresar */}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-4 bg-gradient-to-r from-herbalife-green to-herbalife-dark text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {loading ? (
+                            <div className="flex items-center justify-center gap-2">
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>Ingresando...</span>
+                            </div>
+                        ) : (
+                            "INGRESAR"
+                        )}
+                    </button>
+                </form>
+
+                {/* Footer */}
+                <div className="mt-8 text-center">
+                    <p className="text-sm text-gray-400">
+                        Panel Administrativo Herbalife Clubes
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
