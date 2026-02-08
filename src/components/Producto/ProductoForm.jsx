@@ -1,13 +1,15 @@
 /**
  * 📝 ProductoForm.jsx
  * Formulario para crear/editar productos del catálogo
+ * 
+ * ⚠️ HubId hardcodeado temporalmente a 2
+ * TODO: Cuando se implemente gestión de hubs, cambiar en línea 24
  */
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save } from "lucide-react";
 import Swal from "sweetalert2";
 import { getProductoById, createProducto, updateProducto } from "../../services/ProductoService";
-import { getAllHubs } from "../../services/HubService";
 
 export default function ProductoForm() {
     const { id } = useParams();
@@ -18,25 +20,18 @@ export default function ProductoForm() {
         nombre: "",
         descripcion: "",
     });
-    const [hubId, setHubId] = useState("");
-    const [hubs, setHubs] = useState([]);
+
+    // ⚠️ HARDCODED: Hub ID = 2 (coincide con el Hub existente en BD)
+    // TODO: Cuando se implemente gestión de hubs, reemplazar por selector dinámico
+    const hubId = 2;
+
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(isEdit);
 
     useEffect(() => {
-        fetchHubs();
+        // Removido fetchHubs - ya no se necesita
         if (isEdit) fetchProducto();
     }, [id]);
-
-    const fetchHubs = async () => {
-        try {
-            const response = await getAllHubs();
-            // Filtrar solo hubs activos
-            setHubs(response.data.filter(hub => hub.estado === "ACTIVO"));
-        } catch (error) {
-            console.error("Error al cargar hubs:", error);
-        }
-    };
 
     const fetchProducto = async () => {
         try {
@@ -45,7 +40,7 @@ export default function ProductoForm() {
                 nombre: response.data.nombre || "",
                 descripcion: response.data.descripcion || "",
             });
-            setHubId(response.data.hubId || "");
+            // hubId ya está hardcodeado a 1, no se carga del producto
         } catch (error) {
             Swal.fire("Error", "No se pudo cargar el producto", "error");
             navigate("/productos");
@@ -67,10 +62,7 @@ export default function ProductoForm() {
             return;
         }
 
-        if (!hubId) {
-            Swal.fire("Validación", "Selecciona un hub", "warning");
-            return;
-        }
+        // Validación removida - hubId siempre es 1
 
         setLoading(true);
         try {
@@ -153,24 +145,11 @@ export default function ProductoForm() {
                     />
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Hub *
-                    </label>
-                    <select
-                        value={hubId}
-                        onChange={(e) => setHubId(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none"
-                    >
-                        <option value="">Seleccionar hub...</option>
-                        {hubs.map(hub => (
-                            <option key={hub.id} value={hub.id}>
-                                {hub.nombre}
-                            </option>
-                        ))}
-                    </select>
-                    <p className="mt-1 text-sm text-gray-500">
-                        Los productos están asociados a un Hub
+                {/* Hub selector removido - hubId hardcodeado a 2 */}
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                        🛈 <strong>Nota:</strong> Los productos se crean automáticamente en el Hub ID=2.
+                        {/* TODO: Agregar selector de Hub cuando se implemente gestión de hubs */}
                     </p>
                 </div>
 

@@ -4,38 +4,34 @@
  * Soporta envío global o segmentado (por hub/club)
  */
 import React, { useState, useEffect } from "react";
-import { Send, Users, Building2, Store } from "lucide-react";
+import { Send, Users, Store } from "lucide-react";
 import Swal from "sweetalert2";
 import { enviarNotificacion } from "../../services/NotificacionService";
-import { getAllHubs } from "../../services/HubService";
+// HubService removido - gestión de hubs eliminada
 import { getAllClubes } from "../../services/ClubService";
 
 export default function NotificacionForm() {
     const [formData, setFormData] = useState({
         titulo: "",
         mensaje: "",
-        tipoEnvio: "GLOBAL", // GLOBAL, HUB, CLUB
-        hubId: "",
+        tipoEnvio: "GLOBAL", // GLOBAL, CLUB (HUB removido)
+        // hubId removido
         clubId: "",
     });
     const [loading, setLoading] = useState(false);
-    const [hubs, setHubs] = useState([]);
+    // hubs removido
     const [clubes, setClubes] = useState([]);
 
     useEffect(() => {
-        fetchHubsYClubes();
+        fetchClubes();
     }, []);
 
-    const fetchHubsYClubes = async () => {
+    const fetchClubes = async () => {
         try {
-            const [hubsRes, clubesRes] = await Promise.all([
-                getAllHubs(),
-                getAllClubes(),
-            ]);
-            setHubs(hubsRes.data);
-            setClubes(clubesRes.data);
+            const response = await getAllClubes();
+            setClubes(response.data);
         } catch (error) {
-            console.error("Error al cargar datos:", error);
+            console.error("Error al cargar clubes:", error);
         }
     };
 
@@ -52,11 +48,7 @@ export default function NotificacionForm() {
             return;
         }
 
-        // Validar selección según tipo de envío
-        if (formData.tipoEnvio === "HUB" && !formData.hubId) {
-            Swal.fire("Validación", "Selecciona un hub", "warning");
-            return;
-        }
+        // Validar selección según tipo de envío (HUB removido)
         if (formData.tipoEnvio === "CLUB" && !formData.clubId) {
             Swal.fire("Validación", "Selecciona un club", "warning");
             return;
@@ -69,25 +61,23 @@ export default function NotificacionForm() {
                 mensaje: formData.mensaje,
             };
 
-            // Determinar parámetros de segmentación
-            const hubId = formData.tipoEnvio === "HUB" ? parseInt(formData.hubId) : null;
+            // Determinar parámetros de segmentación (hubId eliminado)
+            const hubId = null;  // HUB removido
             const clubId = formData.tipoEnvio === "CLUB" ? parseInt(formData.clubId) : null;
 
             await enviarNotificacion(notificacion, hubId, clubId);
 
             const tipoTexto =
                 formData.tipoEnvio === "GLOBAL" ? "todos los usuarios" :
-                    formData.tipoEnvio === "HUB" ? "usuarios del hub" :
-                        "usuarios del club";
+                    "usuarios del club";  // HUB option removido
 
             Swal.fire("Enviada", `Notificación enviada a ${tipoTexto}`, "success");
 
-            // Limpiar formulario
+            // Limpiar formulario (hubId removido)
             setFormData({
                 titulo: "",
                 mensaje: "",
                 tipoEnvio: "GLOBAL",
-                hubId: "",
                 clubId: "",
             });
         } catch (error) {
@@ -116,13 +106,13 @@ export default function NotificacionForm() {
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                         Tipo de Envío
                     </label>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                         <button
                             type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, tipoEnvio: "GLOBAL", hubId: "", clubId: "" }))}
+                            onClick={() => setFormData(prev => ({ ...prev, tipoEnvio: "GLOBAL", clubId: "" }))}
                             className={`p-4 border-2 rounded-lg transition-all ${formData.tipoEnvio === "GLOBAL"
-                                    ? "border-herbalife-green bg-herbalife-green/10"
-                                    : "border-gray-200 hover:border-gray-300"
+                                ? "border-herbalife-green bg-herbalife-green/10"
+                                : "border-gray-200 hover:border-gray-300"
                                 }`}
                         >
                             <Users className={`w-6 h-6 mx-auto mb-2 ${formData.tipoEnvio === "GLOBAL" ? "text-herbalife-green" : "text-gray-400"
@@ -134,29 +124,14 @@ export default function NotificacionForm() {
                             <p className="text-xs text-gray-500 mt-1">Todos</p>
                         </button>
 
-                        <button
-                            type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, tipoEnvio: "HUB", clubId: "" }))}
-                            className={`p-4 border-2 rounded-lg transition-all ${formData.tipoEnvio === "HUB"
-                                    ? "border-blue-500 bg-blue-50"
-                                    : "border-gray-200 hover:border-gray-300"
-                                }`}
-                        >
-                            <Building2 className={`w-6 h-6 mx-auto mb-2 ${formData.tipoEnvio === "HUB" ? "text-blue-600" : "text-gray-400"
-                                }`} />
-                            <p className={`text-sm font-medium ${formData.tipoEnvio === "HUB" ? "text-blue-600" : "text-gray-600"
-                                }`}>
-                                Por Hub
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">Regional</p>
-                        </button>
+                        {/* Hub option removido - gestión eliminada */}
 
                         <button
                             type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, tipoEnvio: "CLUB", hubId: "" }))}
+                            onClick={() => setFormData(prev => ({ ...prev, tipoEnvio: "CLUB" }))}
                             className={`p-4 border-2 rounded-lg transition-all ${formData.tipoEnvio === "CLUB"
-                                    ? "border-orange-500 bg-orange-50"
-                                    : "border-gray-200 hover:border-gray-300"
+                                ? "border-orange-500 bg-orange-50"
+                                : "border-gray-200 hover:border-gray-300"
                                 }`}
                         >
                             <Store className={`w-6 h-6 mx-auto mb-2 ${formData.tipoEnvio === "CLUB" ? "text-orange-600" : "text-gray-400"
@@ -170,25 +145,8 @@ export default function NotificacionForm() {
                     </div>
                 </div>
 
-                {/* Selección de Hub/Club según tipo */}
-                {formData.tipoEnvio === "HUB" && (
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Seleccionar Hub
-                        </label>
-                        <select
-                            name="hubId"
-                            value={formData.hubId}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                        >
-                            <option value="">Seleccionar...</option>
-                            {hubs.map(hub => (
-                                <option key={hub.id} value={hub.id}>{hub.nombre}</option>
-                            ))}
-                        </select>
-                    </div>
-                )}
+                {/* Selección de Club (Hub selector removido) */}
+                {/* Hub selector removido - gestión eliminada */}
 
                 {formData.tipoEnvio === "CLUB" && (
                     <div>

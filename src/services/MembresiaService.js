@@ -15,15 +15,26 @@ export const getMembresiaById = (id) => api.get(`${API_URL}/${id}`);
 export const getMembresiaByUsuario = (usuarioId) =>
     api.get(`${API_URL}/usuario/${usuarioId}`);
 
+/** Obtiene TODAS las membresías de un club (para listado admin) */
+export const getAllMembresiasByClub = (clubId) =>
+    api.get(`${API_URL}/club/${clubId}`);
+
 // === OPERACIONES ADMINISTRATIVAS ===
 
 /**
- * Actualiza el nivel de una membresía (admin override)
+ * Cambia el estado de una membresía (admin)
+ * @param {number} id - ID de la membresía
+ * @param {string} estado - Nuevo estado (ACTIVA/INACTIVA/etc)
+ */
+export const actualizarEstado = (id, estado) =>
+    api.patch(`${API_URL}/${id}/estado`, null, { params: { estado } });
+
+/** * Actualiza el nivel de una membresía (admin override)
  * @param {number} id - ID de la membresía
  * @param {number} nivelId - ID del nuevo nivel
  */
 export const actualizarNivel = (id, nivelId) =>
-    api.patch(`${API_URL}/${id}/actualizar-nivel`, null, { params: { nivelId } });
+    api.patch(`${API_URL}/${id}/nivel`, null, { params: { nivelId } });
 
 /**
  * Actualiza los puntos de una membresía (admin override)
@@ -31,4 +42,4 @@ export const actualizarNivel = (id, nivelId) =>
  * @param {number} puntos - Nuevos puntos
  */
 export const actualizarPuntos = (id, puntos) =>
-    api.patch(`${API_URL}/${id}/actualizar-puntos`, null, { params: { puntos } });
+    api.patch(`${API_URL}/${id}/puntos`, null, { params: { puntos } });

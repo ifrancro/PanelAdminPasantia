@@ -40,12 +40,11 @@ export default function Sidebar() {
         },
 
         // === GESTIÓN DE ESTRUCTURA ===
-        // Hubs (regiones/zonas) y Clubes (puntos de venta)
+        // Clubes (puntos de venta)
         // Aquí el admin aprueba/rechaza solicitudes de clubes
         {
             title: "Estructura",
             links: [
-                { to: "/hubs", label: "Hubs", icon: Building2 },
                 { to: "/clubes", label: "Clubes", icon: Store },
             ],
         },

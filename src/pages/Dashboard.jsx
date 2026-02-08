@@ -17,19 +17,19 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { getAllClubes } from "../services/ClubService";
-import { getAllHubs } from "../services/HubService";
+// HubService removido - gestión eliminada
 import { getAllProductos } from "../services/ProductoService";
 
 export default function Dashboard() {
     const { user } = useAuth();
     const navigate = useNavigate();
 
-    // Estados para datos del dashboard
+    // Estados para datos del dashboard (Hubs removido)
     const [stats, setStats] = useState({
         totalClubes: 0,
         clubesPendientes: 0,
         clubesActivos: 0,
-        totalHubs: 0,
+        // totalHubs removido
         totalProductos: 0,
         loading: true,
     });
@@ -41,10 +41,9 @@ export default function Dashboard() {
 
     const fetchDashboardData = async () => {
         try {
-            // Cargar datos en paralelo
-            const [clubesRes, hubsRes, productosRes] = await Promise.all([
+            // Cargar datos en paralelo (Hubs removido)
+            const [clubesRes, productosRes] = await Promise.all([
                 getAllClubes(),
-                getAllHubs(),
                 getAllProductos(),
             ]);
 
@@ -54,7 +53,7 @@ export default function Dashboard() {
                 totalClubes: clubes.length,
                 clubesPendientes: clubes.filter(c => c.estado === "PENDIENTE").length,
                 clubesActivos: clubes.filter(c => c.estado === "ACTIVO").length,
-                totalHubs: hubsRes.data.length,
+                // totalHubs removido
                 totalProductos: productosRes.data.length,
                 loading: false,
             });
@@ -133,18 +132,8 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Total Hubs */}
-                <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Hubs</p>
-                            <p className="text-3xl font-bold text-gray-800 mt-1">{stats.totalHubs}</p>
-                        </div>
-                        <div className="p-3 bg-blue-100 rounded-lg">
-                            <Building2 className="w-8 h-8 text-blue-600" />
-                        </div>
-                    </div>
-                </div>
+                {/* Total Hubs removido - gestión eliminada */}
+
             </div>
 
             {/* === STATS ADICIONALES === */}
@@ -201,13 +190,7 @@ export default function Dashboard() {
                         <Store className="w-6 h-6 text-herbalife-green mx-auto mb-2" />
                         <p className="text-sm font-medium text-gray-700">Clubes</p>
                     </button>
-                    <button
-                        onClick={() => navigate("/hubs")}
-                        className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all"
-                    >
-                        <Building2 className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                        <p className="text-sm font-medium text-gray-700">Hubs</p>
-                    </button>
+                    {/* Hubs removido - gestión eliminada */}
                     <button
                         onClick={() => navigate("/productos")}
                         className="p-4 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all"

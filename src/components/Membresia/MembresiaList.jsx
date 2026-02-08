@@ -2,23 +2,43 @@
  * 🎟️ MembresiaList.jsx
  * Lista de membresías con opciones de actualización
  */
-import React, { useState } from "react";
-import { Award, Edit, TrendingUp } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Award, Edit, TrendingUp, AlertCircle, ChevronDown, Check } from "lucide-react";
+import { Listbox } from "@headlessui/react";
 import Swal from "sweetalert2";
-import { actualizarNivel, actualizarPuntos } from "../../services/MembresiaService";
+import { getAllMembresiasByClub, actualizarNivel, actualizarPuntos, actualizarEstado } from "../../services/MembresiaService";
 import { getAllNivelesSocio } from "../../services/NivelSocioService";
+import { getAllClubes } from "../../services/ClubService";
 
 export default function MembresiaList() {
-    // Estado de ejemplo - en producción cargarías esto desde un endpoint
-    // que retorne todas las membresías
     const [membresias, setMembresias] = useState([]);
     const [niveles, setNiveles] = useState([]);
+    const [clubes, setClubes] = useState([]);
+    const [selectedClubId, setSelectedClubId] = useState(null); // null para números
     const [loading, setLoading] = useState(false);
 
-    React.useEffect(() => {
-        // Cargar niveles disponibles
+    useEffect(() => {
+        // Cargar niveles y clubes disponibles
         fetchNiveles();
+        fetchClubes();
     }, []);
+
+    useEffect(() => {
+        // Cargar membresías cuando se selecciona un club
+        if (selectedClubId) {
+            fetchMembresias();
+        }
+    }, [selectedClubId]);
+
+    const fetchClubes = async () => {
+        try {
+            const response = await getAllClubes();
+            const clubesActivos = response.data.filter(c => c.estado === "ACTIVO");
+            setClubes(clubesActivos);
+        } catch (error) {
+            console.error("Error al cargar clubes:", error);
+        }
+    };
 
     const fetchNiveles = async () => {
         try {
@@ -26,6 +46,19 @@ export default function MembresiaList() {
             setNiveles(response.data);
         } catch (error) {
             console.error("Error al cargar niveles:", error);
+        }
+    };
+
+    const fetchMembresias = async () => {
+        try {
+            setLoading(true);
+            const response = await getAllMembresiasByClub(selectedClubId);
+            setMembresias(response.data);
+        } catch (error) {
+            console.error("Error al cargar membresías:", error);
+            Swal.fire("Error", "No se pudieron cargar las membresías", "error");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -58,7 +91,7 @@ export default function MembresiaList() {
             try {
                 await actualizarPuntos(membresiaId, result.value);
                 Swal.fire("Actualizado", "Puntos actualizados correctamente", "success");
-                // Aquí deberías recargar las membresías
+                fetchMembresias(); // Recargar
             } catch (error) {
                 Swal.fire("Error", "No se pudieron actualizar los puntos", "error");
             }
@@ -89,7 +122,7 @@ export default function MembresiaList() {
             try {
                 await actualizarNivel(membresiaId, parseInt(result.value));
                 Swal.fire("Actualizado", "Nivel actualizado correctamente", "success");
-                // Aquí deberías recargar las membresías
+                fetchMembresias(); // Recargar
             } catch (error) {
                 Swal.fire("Error", "No se pudo actualizar el nivel", "error");
             }
@@ -121,20 +154,100 @@ export default function MembresiaList() {
                 </p>
             </div>
 
-            {/* Placeholder - en producción cargarías esto desde la API */}
-            <div className="p-8 text-center text-gray-500">
-                <Award className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                <p className="text-sm">
-                    Para ver membresías activas, necesitas implementar el endpoint<br />
-                    <code className="bg-gray-100 px-2 py-1 rounded text-xs">GET /membresias</code>
-                </p>
-                <p className="text-xs text-gray-400 mt-2">
-                    Actualmente el backend solo tiene consultas por ID o por usuario
-                </p>
+            {/* Selector de Club con Headless UI */}
+            <div className="p-6 bg-gray-50 border-b border-gray-200">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Seleccionar Club para ver membresías:
+                </label>
+
+                <Listbox value={selectedClubId} onChange={setSelectedClubId}>
+                    <div className="relative w-full max-w-md">
+                        <Listbox.Button className="relative w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-left focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none cursor-pointer hover:border-gray-400 transition-colors">
+                            <span className="block truncate text-gray-900 font-medium">
+                                {selectedClubId
+                                    ? (() => {
+                                        const club = clubes.find(c => c.id === selectedClubId);
+                                        return club ? club.nombreClub : "-- Seleccionar club --";
+                                    })()
+                                    : "-- Seleccionar club --"
+                                }
+                            </span>
+                            <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <ChevronDown className="w-5 h-5 text-gray-400" />
+                            </span>
+                        </Listbox.Button>
+
+                        <Listbox.Options className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto focus:outline-none">
+                            <Listbox.Option
+                                value={null}
+                                className={({ active }) =>
+                                    `cursor-pointer select-none relative py-2 pl-10 pr-4 ${active ? 'bg-herbalife-green/10 text-herbalife-dark' : 'text-gray-900'
+                                    }`
+                                }
+                            >
+                                {({ selected }) => (
+                                    <>
+                                        <span className={`block truncate ${selected ? 'font-semibold' : 'font-normal'}`}>
+                                            -- Seleccionar club --
+                                        </span>
+                                        {selected && (
+                                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-herbalife-green">
+                                                <Check className="w-5 h-5" />
+                                            </span>
+                                        )}
+                                    </>
+                                )}
+                            </Listbox.Option>
+
+                            {clubes.map((club) => (
+                                <Listbox.Option
+                                    key={club.id}
+                                    value={club.id}
+                                    className={({ active }) =>
+                                        `cursor-pointer select-none relative py-2 pl-10 pr-4 ${active ? 'bg-herbalife-green/10 text-herbalife-dark' : 'text-gray-900'
+                                        }`
+                                    }
+                                >
+                                    {({ selected }) => (
+                                        <>
+                                            <span className={`block truncate ${selected ? 'font-semibold' : 'font-normal'}`}>
+                                                {club.nombreClub}
+                                            </span>
+                                            {selected && (
+                                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-herbalife-green">
+                                                    <Check className="w-5 h-5" />
+                                                </span>
+                                            )}
+                                        </>
+                                    )}
+                                </Listbox.Option>
+                            ))}
+                        </Listbox.Options>
+                    </div>
+                </Listbox>
             </div>
 
-            {/* Tabla de ejemplo (oculta por ahora) */}
-            {membresias.length > 0 && (
+            {/* Contenido condicional */}
+            {!selectedClubId ? (
+                <div className="p-8 text-center text-gray-500">
+                    <Award className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                    <p className="text-sm">
+                        Selecciona un club para ver sus membresías activas
+                    </p>
+                </div>
+            ) : loading ? (
+                <div className="p-8 text-center">
+                    <div className="animate-spin h-8 w-8 border-4 border-herbalife-green border-t-transparent rounded-full mx-auto"></div>
+                    <p className="text-sm text-gray-500 mt-2">Cargando...</p>
+                </div>
+            ) : membresias.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                    <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                    <p className="text-sm">
+                        No hay membresías en este club
+                    </p>
+                </div>
+            ) : (
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-gray-50">
@@ -149,19 +262,19 @@ export default function MembresiaList() {
                         <tbody className="divide-y divide-gray-200">
                             {membresias.map((membresia) => (
                                 <tr key={membresia.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 text-sm text-gray-800">
-                                        {membresia.usuario?.nombre} {membresia.usuario?.apellido}
+                                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                                        {membresia.usuarioNombre || "-"}
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">
-                                        {membresia.club?.nombre || "-"}
+                                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                                        {membresia.clubNombre || "-"}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                                            {membresia.nivelSocio?.nombre || "Básico"}
+                                        <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">
+                                            {membresia.nivelNombre || "Básico"}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-sm font-semibold text-gray-800">
-                                        {membresia.puntos || 0} pts
+                                    <td className="px-6 py-4 text-sm font-bold text-gray-900">
+                                        {membresia.puntosAcumulados || 0} pts
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex justify-end gap-2">

@@ -24,13 +24,19 @@ export const getAllProductos = (clubId = null) => {
 export const getProductoById = (id) => api.get(`${API_URL}/${id}`);
 
 /**
- * Crea un nuevo producto asociado a un HUB (mediante un club)
- * IMPORTANTE: Backend requiere clubId, luego asocia al Hub de ese club
- * @param {object} producto - Solo nombre y descripcion
- * @param {number} clubId - ID del club (backend obtiene Hub del club)
+ * Crea un nuevo producto asociado a un Hub
+ * @param {object} producto - { nombre, descripcion }
+ * @param {number} hubId - ID del Hub (hardcoded to 1 in ProductoForm)
  */
-export const createProducto = (producto, clubId) =>
-    api.post(`${API_URL}?clubId=${clubId}`, producto);
+export const createProducto = (producto, hubId) => {
+    // ✅ Enviar hubId EN EL BODY (no como query param)
+    // Backend detectará hubId en el DTO y usará createProductoFromHub
+    const payload = {
+        ...producto,
+        hubId: hubId
+    };
+    return api.post(API_URL, payload);
+};
 
 /** Actualiza un producto existente */
 export const updateProducto = (id, producto) => api.put(`${API_URL}/${id}`, producto);

@@ -31,7 +31,7 @@ import LoginPage from "./pages/LoginPage";
 // Páginas protegidas - Fase 1
 import Dashboard from "./pages/Dashboard";         // ✅ Con datos reales
 import ClubPage from "./pages/ClubPage";           // ✅ Fase 1
-import HubPage from "./pages/HubPage";             // ✅ Fase 1
+// HubPage removido - gestión eliminada
 import ProductoPage from "./pages/ProductoPage";   // ✅ Fase 1
 import NivelSocioPage from "./pages/NivelSocioPage"; // ✅ Fase 1
 import LogroPage from "./pages/LogroPage";         // ✅ Fase 1
@@ -69,7 +69,7 @@ export default function App() {
             <Route index element={<Dashboard />} />
 
             {/* === ESTRUCTURA === */}
-            <Route path="hubs/*" element={<HubPage />} />
+            {/* Hub route removida - gestión eliminada */}
             <Route path="clubes/*" element={<ClubPage />} />
 
             {/* === USUARIOS === */}
