@@ -13,9 +13,10 @@ const API_URL = "/clubes";
  * Obtiene todos los clubes
  * @param {number} hubId - Opcional, filtra por hub
  */
-export const getAllClubes = (hubId = null) => {
+export const getClubes = async (hubId = null) => {
     const params = hubId ? { hubId } : {};
-    return api.get(API_URL, { params });
+    const response = await api.get(API_URL, { params });
+    return response.data;
 };
 
 /**
@@ -59,3 +60,15 @@ export const activarClub = (id) => api.patch(`${API_URL}/${id}/activar`);
  * Desactiva un club activo (por incumplimiento de normas, etc.)
  */
 export const desactivarClub = (id) => api.patch(`${API_URL}/${id}/desactivar`);
+
+// Export default como objeto
+export const clubService = {
+    getClubes,
+    getClubById,
+    createClub,
+    updateClub,
+    aprobarClub,
+    rechazarClub,
+    activarClub,
+    desactivarClub,
+};
