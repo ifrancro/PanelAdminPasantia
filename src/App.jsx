@@ -45,7 +45,6 @@ import NotificacionPage from "./pages/NotificacionPage"; // ✅ Fase 2
 import SoportePage from "./pages/SoportePage";     // ✅ Fase 3
 import AsistenciaPage from "./pages/AsistenciaPage"; // ✅ Fase 3
 import MembresiaPage from "./pages/MembresiaPage"; // ✅ Fase 3
-import ReportsPage from "./pages/Reports/ReportsPage"; // ✅ Reportes
 
 import "./index.css";
 
@@ -91,9 +90,6 @@ export default function App() {
 
             {/* === SOPORTE === */}
             <Route path="soporte/*" element={<SoportePage />} />
-
-            {/* === REPORTES === */}
-            <Route path="reportes/*" element={<ReportsPage />} />
           </Route>
 
           {/* Redirección por defecto */}

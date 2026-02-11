@@ -13,7 +13,6 @@ import {
     Bell,           // Notificaciones
     HeadphonesIcon, // Soporte
     Layers,         // Niveles Socio
-    FileText,       // Reportes
     LogOut,         // Cerrar sesión
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -97,15 +96,6 @@ export default function Sidebar() {
             title: "Soporte",
             links: [
                 { to: "/soporte", label: "Tickets", icon: HeadphonesIcon },
-            ],
-        },
-
-        // === REPORTES ===
-        // Generación de reportes en PDF
-        {
-            title: "Reportes",
-            links: [
-                { to: "/reportes", label: "Reportes", icon: FileText },
             ],
         },
     ];
