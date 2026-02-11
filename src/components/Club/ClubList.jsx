@@ -259,7 +259,7 @@ export default function ClubList() {
                                     <tr key={club.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4">
                                             <div>
-                                                <p className="font-medium text-gray-800">{club.nombre}</p>
+                                                <p className="font-medium text-gray-800">{club.nombreClub}</p>
                                                 <p className="text-sm text-gray-500">{club.direccion || "-"}</p>
                                             </div>
                                         </td>
@@ -289,14 +289,14 @@ export default function ClubList() {
                                                 {club.estado === "PENDIENTE" && (
                                                     <>
                                                         <button
-                                                            onClick={() => handleAprobar(club.id, club.nombre)}
+                                                            onClick={() => handleAprobar(club.id, club.nombreClub)}
                                                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
                                                             title="Aprobar"
                                                         >
                                                             <CheckCircle className="w-4 h-4" />
                                                         </button>
                                                         <button
-                                                            onClick={() => handleRechazar(club.id, club.nombre)}
+                                                            onClick={() => handleRechazar(club.id, club.nombreClub)}
                                                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                                                             title="Rechazar"
                                                         >
@@ -306,7 +306,7 @@ export default function ClubList() {
                                                 )}
                                                 {club.estado === "ACTIVO" && (
                                                     <button
-                                                        onClick={() => handleDesactivar(club.id, club.nombre)}
+                                                        onClick={() => handleDesactivar(club.id, club.nombreClub)}
                                                         className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg"
                                                         title="Desactivar"
                                                     >

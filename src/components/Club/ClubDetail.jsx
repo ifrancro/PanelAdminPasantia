@@ -10,7 +10,6 @@ import {
     MapPin,
     Clock,
     User,
-    Phone,
     CheckCircle,
     XCircle,
     Power,
@@ -138,7 +137,7 @@ export default function ClubDetail() {
                             <ArrowLeft className="w-5 h-5 text-gray-600" />
                         </button>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-800">{club.nombre}</h1>
+                            <h1 className="text-2xl font-bold text-gray-800">{club.nombreClub}</h1>
                             <span className={`inline-block mt-2 px-3 py-1 rounded-full text-sm font-medium border ${getEstadoBadge(club.estado)}`}>
                                 {club.estado}
                             </span>
@@ -204,7 +203,7 @@ export default function ClubDetail() {
                             <Clock className="w-5 h-5 text-gray-400 mt-0.5" />
                             <div>
                                 <p className="text-sm text-gray-500">Horario</p>
-                                <p className="text-gray-800">{club.horarioAtencion || "No especificado"}</p>
+                                <p className="text-gray-800">{club.horario || "No especificado"}</p>
                             </div>
                         </div>
                     </div>
@@ -219,13 +218,6 @@ export default function ClubDetail() {
                             <div>
                                 <p className="text-sm text-gray-500">Nombre</p>
                                 <p className="text-gray-800">{club.anfitrionNombre || "No asignado"}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                            <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
-                            <div>
-                                <p className="text-sm text-gray-500">Teléfono</p>
-                                <p className="text-gray-800">{club.anfitrionTelefono || "No especificado"}</p>
                             </div>
                         </div>
                     </div>
