@@ -19,6 +19,14 @@ export default function AsistenciaList() {
         try {
             setLoading(true);
             const response = await getAllAsistencias();
+
+            // 🔍 DEBUG: Log the entire response to see the actual structure
+            console.log("=== DEBUG: API Response ===");
+            console.log("Full response:", response);
+            console.log("response.data:", response.data);
+            console.log("First item:", response.data?.[0]);
+            console.log("========================");
+
             setAsistencias(response.data);
         } catch (error) {
             console.error("Error al cargar asistencias:", error);
@@ -73,15 +81,15 @@ export default function AsistenciaList() {
                             asistencias.map((asistencia) => (
                                 <tr key={asistencia.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 text-sm text-gray-800">
-                                        {asistencia.fechaAsistencia
-                                            ? new Date(asistencia.fechaAsistencia).toLocaleString()
+                                        {asistencia.fechaHora
+                                            ? new Date(asistencia.fechaHora).toLocaleString()
                                             : "-"}
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
                                             <Users className="w-4 h-4 text-gray-400" />
                                             <span className="text-sm text-gray-800">
-                                                {asistencia.socio?.nombre || "Socio desconocido"}
+                                                {asistencia.membresiaNumeroSocio || "Socio desconocido"}
                                             </span>
                                         </div>
                                     </td>
@@ -89,16 +97,16 @@ export default function AsistenciaList() {
                                         <div className="flex items-center gap-2">
                                             <Store className="w-4 h-4 text-gray-400" />
                                             <span className="text-sm text-gray-800">
-                                                {asistencia.club?.nombre || "Club desconocido"}
+                                                {asistencia.clubNombre || "Club desconocido"}
                                             </span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${asistencia.verificado
-                                                ? "bg-green-100 text-green-700"
-                                                : "bg-gray-100 text-gray-700"
+                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${asistencia.estado === 'CONFIRMADA'
+                                            ? "bg-green-100 text-green-700"
+                                            : "bg-gray-100 text-gray-700"
                                             }`}>
-                                            {asistencia.verificado ? "Verificado" : "Pendiente"}
+                                            {asistencia.estado === 'CONFIRMADA' ? "Verificado" : asistencia.estado || "Pendiente"}
                                         </span>
                                     </td>
                                 </tr>
