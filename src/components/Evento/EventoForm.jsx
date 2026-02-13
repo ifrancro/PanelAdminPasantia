@@ -21,6 +21,12 @@ export default function EventoForm() {
     });
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(isEdit);
+    const [errors, setErrors] = useState({
+        nombre: "",
+        descripcion: "",
+        fecha: "",
+        ubicacion: "",
+    });
 
     useEffect(() => {
         if (isEdit) fetchEvento();
@@ -46,13 +52,72 @@ export default function EventoForm() {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
+        // Limpiar error al escribir
+        if (errors[name]) {
+            setErrors((prev) => ({ ...prev, [name]: "" }));
+        }
+    };
+
+    // Función de validación
+    const validateForm = () => {
+        let valid = true;
+        const errorsCopy = { ...errors };
+
+        // Nombre - requerido, min 3, max 100
+        if (!formData.nombre.trim()) {
+            errorsCopy.nombre = "El nombre es requerido";
+            valid = false;
+        } else if (formData.nombre.trim().length < 3) {
+            errorsCopy.nombre = "El nombre debe tener al menos 3 caracteres";
+            valid = false;
+        } else if (formData.nombre.trim().length > 100) {
+            errorsCopy.nombre = "El nombre no puede exceder 100 caracteres";
+            valid = false;
+        } else {
+            errorsCopy.nombre = "";
+        }
+
+        // Descripción - max 500 caracteres
+        if (formData.descripcion.length > 500) {
+            errorsCopy.descripcion = "La descripción no puede exceder 500 caracteres";
+            valid = false;
+        } else {
+            errorsCopy.descripcion = "";
+        }
+
+        // Fecha - validar fecha futura
+        if (formData.fecha) {
+            const fechaSeleccionada = new Date(formData.fecha);
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0); // Resetear horas para comparar solo fechas
+
+            if (fechaSeleccionada < hoy) {
+                errorsCopy.fecha = "La fecha del evento debe ser futura";
+                valid = false;
+            } else {
+                errorsCopy.fecha = "";
+            }
+        } else {
+            errorsCopy.fecha = "";
+        }
+
+        // Ubicación - max 200 caracteres
+        if (formData.ubicacion.length > 200) {
+            errorsCopy.ubicacion = "La ubicación no puede exceder 200 caracteres";
+            valid = false;
+        } else {
+            errorsCopy.ubicacion = "";
+        }
+
+        setErrors(errorsCopy);
+        return valid;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.nombre.trim()) {
-            Swal.fire("Validación", "El nombre es requerido", "warning");
+        // Validar formulario
+        if (!validateForm()) {
             return;
         }
 
@@ -106,8 +171,11 @@ export default function EventoForm() {
                         value={formData.nombre}
                         onChange={handleChange}
                         placeholder="Ej: Conferencia Anual 2026"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green outline-none"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green outline-none ${errors.nombre ? 'border-red-500' : 'border-gray-300'}`}
                     />
+                    {errors.nombre && (
+                        <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
+                    )}
                 </div>
 
                 <div>
@@ -117,9 +185,14 @@ export default function EventoForm() {
                         value={formData.descripcion}
                         onChange={handleChange}
                         rows="4"
+                        maxLength="500"
                         placeholder="Descripción del evento..."
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green outline-none resize-none"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green outline-none resize-none ${errors.descripcion ? 'border-red-500' : 'border-gray-300'}`}
                     />
+                    {errors.descripcion && (
+                        <p className="text-red-500 text-sm mt-1">{errors.descripcion}</p>
+                    )}
+                    <p className="text-gray-500 text-xs mt-1">{formData.descripcion.length}/500 caracteres</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -130,8 +203,11 @@ export default function EventoForm() {
                             name="fecha"
                             value={formData.fecha}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green outline-none"
+                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green outline-none ${errors.fecha ? 'border-red-500' : 'border-gray-300'}`}
                         />
+                        {errors.fecha && (
+                            <p className="text-red-500 text-sm mt-1">{errors.fecha}</p>
+                        )}
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Ubicación</label>
@@ -140,9 +216,13 @@ export default function EventoForm() {
                             name="ubicacion"
                             value={formData.ubicacion}
                             onChange={handleChange}
+                            maxLength="200"
                             placeholder="Lugar del evento"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green outline-none"
+                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green outline-none ${errors.ubicacion ? 'border-red-500' : 'border-gray-300'}`}
                         />
+                        {errors.ubicacion && (
+                            <p className="text-red-500 text-sm mt-1">{errors.ubicacion}</p>
+                        )}
                     </div>
                 </div>
 

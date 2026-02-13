@@ -71,6 +71,8 @@ export default function MembresiaList() {
                     type="number" 
                     class="swal2-input" 
                     placeholder="Nuevos puntos"
+                    min="0"
+                    max="999999"
                     value="${puntosActuales || 0}"
                 >
             `,
@@ -80,7 +82,11 @@ export default function MembresiaList() {
             preConfirm: () => {
                 const puntos = document.getElementById("swal-input-puntos").value;
                 if (!puntos || puntos < 0) {
-                    Swal.showValidationMessage("Ingresa puntos válidos");
+                    Swal.showValidationMessage("Ingresa puntos válidos (mínimo 0)");
+                    return false;
+                }
+                if (puntos > 999999) {
+                    Swal.showValidationMessage("Los puntos no pueden exceder 999,999");
                     return false;
                 }
                 return parseInt(puntos);

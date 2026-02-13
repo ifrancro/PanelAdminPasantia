@@ -16,6 +16,11 @@ export default function NivelSocioForm() {
     });
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(isEdit);
+    const [errors, setErrors] = useState({
+        nombre: "",
+        visitasRequeridas: "",
+        descripcionBeneficios: "",
+    });
 
     useEffect(() => {
         if (isEdit) fetchNivel();
@@ -40,12 +45,65 @@ export default function NivelSocioForm() {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
+        // Limpiar error al escribir
+        if (errors[name]) {
+            setErrors((prev) => ({ ...prev, [name]: "" }));
+        }
+    };
+
+    // Función de validación
+    const validateForm = () => {
+        let valid = true;
+        const errorsCopy = { ...errors };
+
+        // Nombre - requerido, min 3, max 50
+        if (!formData.nombre.trim()) {
+            errorsCopy.nombre = "El nombre es requerido";
+            valid = false;
+        } else if (formData.nombre.trim().length < 3) {
+            errorsCopy.nombre = "El nombre debe tener al menos 3 caracteres";
+            valid = false;
+        } else if (formData.nombre.trim().length > 50) {
+            errorsCopy.nombre = "El nombre no puede exceder 50 caracteres";
+            valid = false;
+        } else {
+            errorsCopy.nombre = "";
+        }
+
+        // VisitasRequeridas - opcional, si se ingresa validar rango 0-1000
+        if (formData.visitasRequeridas !== "" && formData.visitasRequeridas !== null) {
+            const visitas = parseInt(formData.visitasRequeridas);
+
+            if (isNaN(visitas) || visitas < 0) {
+                errorsCopy.visitasRequeridas = "Las visitas deben ser un número positivo (0 o mayor)";
+                valid = false;
+            } else if (visitas > 1000) {
+                errorsCopy.visitasRequeridas = "Las visitas no pueden exceder 1000";
+                valid = false;
+            } else {
+                errorsCopy.visitasRequeridas = "";
+            }
+        } else {
+            errorsCopy.visitasRequeridas = "";
+        }
+
+        // DescripcionBeneficios - max 500 caracteres
+        if (formData.descripcionBeneficios.length > 500) {
+            errorsCopy.descripcionBeneficios = "La descripción no puede exceder 500 caracteres";
+            valid = false;
+        } else {
+            errorsCopy.descripcionBeneficios = "";
+        }
+
+        setErrors(errorsCopy);
+        return valid;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.nombre.trim()) {
-            Swal.fire("Validación", "El nombre es requerido", "warning");
+
+        // Validar formulario
+        if (!validateForm()) {
             return;
         }
 
@@ -104,8 +162,11 @@ export default function NivelSocioForm() {
                         value={formData.nombre}
                         onChange={handleChange}
                         placeholder="Ej: Bronce, Plata, Oro"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.nombre ? 'border-red-500' : 'border-gray-300'}`}
                     />
+                    {errors.nombre && (
+                        <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
+                    )}
                 </div>
 
                 <div>
@@ -116,8 +177,13 @@ export default function NivelSocioForm() {
                         value={formData.visitasRequeridas}
                         onChange={handleChange}
                         placeholder="Ej: 10"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none"
+                        min="0"
+                        max="1000"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.visitasRequeridas ? 'border-red-500' : 'border-gray-300'}`}
                     />
+                    {errors.visitasRequeridas && (
+                        <p className="text-red-500 text-sm mt-1">{errors.visitasRequeridas}</p>
+                    )}
                 </div>
 
                 <div>
@@ -127,9 +193,14 @@ export default function NivelSocioForm() {
                         value={formData.descripcionBeneficios}
                         onChange={handleChange}
                         rows="3"
+                        maxLength="500"
                         placeholder="Describe los beneficios de este nivel..."
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none resize-none"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none resize-none ${errors.descripcionBeneficios ? 'border-red-500' : 'border-gray-300'}`}
                     />
+                    {errors.descripcionBeneficios && (
+                        <p className="text-red-500 text-sm mt-1">{errors.descripcionBeneficios}</p>
+                    )}
+                    <p className="text-gray-500 text-xs mt-1">{formData.descripcionBeneficios.length}/500 caracteres</p>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">

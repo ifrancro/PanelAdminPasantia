@@ -17,6 +17,11 @@ export default function LogroForm() {
     });
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(isEdit);
+    const [errors, setErrors] = useState({
+        nombre: "",
+        iconoUrl: "",
+        tipoRequisito: "",
+    });
 
     useEffect(() => {
         if (isEdit) fetchLogro();
@@ -42,12 +47,67 @@ export default function LogroForm() {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
+        // Limpiar error al escribir
+        if (errors[name]) {
+            setErrors((prev) => ({ ...prev, [name]: "" }));
+        }
+    };
+
+    // Función de validación
+    const validateForm = () => {
+        let valid = true;
+        const errorsCopy = { ...errors };
+
+        // Nombre - requerido y longitud mínima 3, máxima 100
+        if (!formData.nombre.trim()) {
+            errorsCopy.nombre = "El nombre es requerido";
+            valid = false;
+        } else if (formData.nombre.trim().length < 3) {
+            errorsCopy.nombre = "El nombre debe tener al menos 3 caracteres";
+            valid = false;
+        } else if (formData.nombre.trim().length > 100) {
+            errorsCopy.nombre = "El nombre no puede exceder 100 caracteres";
+            valid = false;
+        } else {
+            errorsCopy.nombre = "";
+        }
+
+        // IconoUrl - formato URL válido (opcional pero si se ingresa, validar)
+        if (formData.iconoUrl && formData.iconoUrl.trim()) {
+            const urlRegex = /^https?:\/\/.+\..+/;
+            if (!urlRegex.test(formData.iconoUrl.trim())) {
+                errorsCopy.iconoUrl = "La URL del ícono debe ser válida (http:// o https://)";
+                valid = false;
+            } else {
+                errorsCopy.iconoUrl = "";
+            }
+        } else {
+            errorsCopy.iconoUrl = "";
+        }
+
+        // TipoRequisito - solo valores permitidos (opcional)
+        if (formData.tipoRequisito && formData.tipoRequisito.trim()) {
+            const tiposPermitidos = ['VISITAS', 'CONSUMO', 'REFERIDOS'];
+            const tipoUpper = formData.tipoRequisito.trim().toUpperCase();
+            if (!tiposPermitidos.includes(tipoUpper)) {
+                errorsCopy.tipoRequisito = "Tipo inválido. Usa: VISITAS, CONSUMO o REFERIDOS";
+                valid = false;
+            } else {
+                errorsCopy.tipoRequisito = "";
+            }
+        } else {
+            errorsCopy.tipoRequisito = "";
+        }
+
+        setErrors(errorsCopy);
+        return valid;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.nombre.trim()) {
-            Swal.fire("Validación", "El nombre es requerido", "warning");
+
+        // Validar formulario
+        if (!validateForm()) {
             return;
         }
 
@@ -101,8 +161,11 @@ export default function LogroForm() {
                         value={formData.nombre}
                         onChange={handleChange}
                         placeholder="Ej: Primera Visita, Cliente Frecuente"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.nombre ? 'border-red-500' : 'border-gray-300'}`}
                     />
+                    {errors.nombre && (
+                        <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
+                    )}
                 </div>
 
                 <div>
@@ -125,8 +188,11 @@ export default function LogroForm() {
                         value={formData.iconoUrl}
                         onChange={handleChange}
                         placeholder="https://ejemplo.com/icono.png"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.iconoUrl ? 'border-red-500' : 'border-gray-300'}`}
                     />
+                    {errors.iconoUrl && (
+                        <p className="text-red-500 text-sm mt-1">{errors.iconoUrl}</p>
+                    )}
                 </div>
 
                 <div>
@@ -137,8 +203,11 @@ export default function LogroForm() {
                         value={formData.tipoRequisito}
                         onChange={handleChange}
                         placeholder="Ej: VISITAS, CONSUMO, REFERIDOS"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.tipoRequisito ? 'border-red-500' : 'border-gray-300'}`}
                     />
+                    {errors.tipoRequisito && (
+                        <p className="text-red-500 text-sm mt-1">{errors.tipoRequisito}</p>
+                    )}
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">

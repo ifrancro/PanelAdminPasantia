@@ -8,7 +8,7 @@
  * - Usuarios: Usuarios y Membresías
  * - Catálogo: Productos, Niveles, Logros
  * - Operaciones: Asistencias
- * - Comunicación: Eventos, Notificaciones
+ * - Comunicación: Eventos
  * - Soporte: Tickets
  */
 import React from "react";
@@ -39,12 +39,13 @@ import LogroPage from "./pages/LogroPage";         // ✅ Fase 1
 // Páginas protegidas - Fase 2
 import UsuarioPage from "./pages/UsuarioPage";     // ✅ Fase 2
 import EventoPage from "./pages/EventoPage";       // ✅ Fase 2
-import NotificacionPage from "./pages/NotificacionPage"; // ✅ Fase 2
+// NotificacionPage removido - funcionalidad eliminada
 
 // Páginas protegidas - Fase 3
 import SoportePage from "./pages/SoportePage";     // ✅ Fase 3
 import AsistenciaPage from "./pages/AsistenciaPage"; // ✅ Fase 3
 import MembresiaPage from "./pages/MembresiaPage"; // ✅ Fase 3
+import ReportsPage from "./pages/Reports/ReportsPage"; // ✅ Reportes
 
 import "./index.css";
 
@@ -86,10 +87,13 @@ export default function App() {
 
             {/* === COMUNICACIÓN === */}
             <Route path="eventos/*" element={<EventoPage />} />
-            <Route path="notificaciones/*" element={<NotificacionPage />} />
+            {/* Notificaciones route removida - funcionalidad eliminada */}
 
             {/* === SOPORTE === */}
             <Route path="soporte/*" element={<SoportePage />} />
+
+            {/* === REPORTES === */}
+            <Route path="reportes" element={<ReportsPage />} />
           </Route>
 
           {/* Redirección por defecto */}

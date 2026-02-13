@@ -15,17 +15,42 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const { login } = useAuth();
+    const [errors, setErrors] = useState({
+        email: "",
+        password: "",
+    });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!email || !password) {
-            Swal.fire({
-                icon: "warning",
-                title: "Campos requeridos",
-                text: "Por favor ingresa tu correo y contraseña",
-                confirmButtonColor: "#7CB342",
-            });
+        // Validar formulario
+        let valid = true;
+        const errorsCopy = { ...errors };
+
+        // Email - requerido y formato válido
+        if (!email.trim()) {
+            errorsCopy.email = "El correo es requerido";
+            valid = false;
+        } else {
+            const emailRegex = /^(?=.{6,254}$)(?=.{1,64}@)[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+            if (!emailRegex.test(email.trim())) {
+                errorsCopy.email = "Formato de correo inválido";
+                valid = false;
+            } else {
+                errorsCopy.email = "";
+            }
+        }
+
+        // Password - requerido
+        if (!password.trim()) {
+            errorsCopy.password = "La contraseña es requerida";
+            valid = false;
+        } else {
+            errorsCopy.password = "";
+        }
+
+        setErrors(errorsCopy);
+        if (!valid) {
             return;
         }
 
@@ -101,31 +126,47 @@ export default function LoginPage() {
                 {/* Formulario */}
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Campo Email */}
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <Mail className="h-5 w-5 text-gray-400" />
+                    <div>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <Mail className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <input
+                                type="email"
+                                placeholder="Correo Electrónico"
+                                value={email}
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                    if (errors.email) setErrors(prev => ({ ...prev, email: "" }));
+                                }}
+                                className={`w-full pl-12 pr-4 py-4 border-2 rounded-xl focus:border-herbalife-green focus:ring-2 focus:ring-herbalife-green/20 outline-none transition-all duration-200 text-gray-700 ${errors.email ? 'border-red-500' : 'border-gray-200'}`}
+                            />
                         </div>
-                        <input
-                            type="email"
-                            placeholder="Correo Electrónico"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:border-herbalife-green focus:ring-2 focus:ring-herbalife-green/20 outline-none transition-all duration-200 text-gray-700"
-                        />
+                        {errors.email && (
+                            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                        )}
                     </div>
 
                     {/* Campo Contraseña */}
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <Lock className="h-5 w-5 text-gray-400" />
+                    <div>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <Lock className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <input
+                                type="password"
+                                placeholder="Contraseña"
+                                value={password}
+                                onChange={(e) => {
+                                    setPassword(e.target.value);
+                                    if (errors.password) setErrors(prev => ({ ...prev, password: "" }));
+                                }}
+                                className={`w-full pl-12 pr-4 py-4 border-2 rounded-xl focus:border-herbalife-green focus:ring-2 focus:ring-herbalife-green/20 outline-none transition-all duration-200 text-gray-700 ${errors.password ? 'border-red-500' : 'border-gray-200'}`}
+                            />
                         </div>
-                        <input
-                            type="password"
-                            placeholder="Contraseña"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:border-herbalife-green focus:ring-2 focus:ring-herbalife-green/20 outline-none transition-all duration-200 text-gray-700"
-                        />
+                        {errors.password && (
+                            <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                        )}
                     </div>
 
                     {/* Botón Ingresar */}

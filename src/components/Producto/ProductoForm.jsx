@@ -27,6 +27,10 @@ export default function ProductoForm() {
 
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(isEdit);
+    const [errors, setErrors] = useState({
+        nombre: "",
+        descripcion: "",
+    });
 
     useEffect(() => {
         // Removido fetchHubs - ya no se necesita
@@ -52,13 +56,48 @@ export default function ProductoForm() {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
+        // Limpiar error al escribir
+        if (errors[name]) {
+            setErrors((prev) => ({ ...prev, [name]: "" }));
+        }
+    };
+
+    // Función de validación
+    const validateForm = () => {
+        let valid = true;
+        const errorsCopy = { ...errors };
+
+        // Nombre - requerido, min 3, max 100
+        if (!formData.nombre.trim()) {
+            errorsCopy.nombre = "El nombre es requerido";
+            valid = false;
+        } else if (formData.nombre.trim().length < 3) {
+            errorsCopy.nombre = "El nombre debe tener al menos 3 caracteres";
+            valid = false;
+        } else if (formData.nombre.trim().length > 100) {
+            errorsCopy.nombre = "El nombre no puede exceder 100 caracteres";
+            valid = false;
+        } else {
+            errorsCopy.nombre = "";
+        }
+
+        // Descripción - max 500 caracteres
+        if (formData.descripcion.length > 500) {
+            errorsCopy.descripcion = "La descripción no puede exceder 500 caracteres";
+            valid = false;
+        } else {
+            errorsCopy.descripcion = "";
+        }
+
+        setErrors(errorsCopy);
+        return valid;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.nombre.trim()) {
-            Swal.fire("Validación", "El nombre es requerido", "warning");
+        // Validar formulario
+        if (!validateForm()) {
             return;
         }
 
@@ -127,8 +166,11 @@ export default function ProductoForm() {
                         value={formData.nombre}
                         onChange={handleChange}
                         placeholder="Ej: Batido Nutricional, Té Herbal"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.nombre ? 'border-red-500' : 'border-gray-300'}`}
                     />
+                    {errors.nombre && (
+                        <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
+                    )}
                 </div>
 
                 <div>
@@ -140,9 +182,14 @@ export default function ProductoForm() {
                         value={formData.descripcion}
                         onChange={handleChange}
                         rows="3"
+                        maxLength="500"
                         placeholder="Descripción del producto..."
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none resize-none"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none resize-none ${errors.descripcion ? 'border-red-500' : 'border-gray-300'}`}
                     />
+                    {errors.descripcion && (
+                        <p className="text-red-500 text-sm mt-1">{errors.descripcion}</p>
+                    )}
+                    <p className="text-gray-500 text-xs mt-1">{formData.descripcion.length}/500 caracteres</p>
                 </div>
 
                 {/* Hub selector removido - hubId hardcodeado a 2 */}
