@@ -2,8 +2,8 @@
  * 📝 ProductoForm.jsx
  * Formulario para crear/editar productos del catálogo
  * 
- * ⚠️ HubId hardcodeado temporalmente a 2
- * TODO: Cuando se implemente gestión de hubs, cambiar en línea 24
+ * ⚠️ HubId hardcodeado temporalmente a 1
+ * TODO: Cuando se implemente gestión de hubs, cambiar en línea 26
  */
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -21,9 +21,9 @@ export default function ProductoForm() {
         descripcion: "",
     });
 
-    // ⚠️ HARDCODED: Hub ID = 2 (coincide con el Hub existente en BD)
+    // ⚠️ HARDCODED: Hub ID = 1 (coincide con el Hub existente en BD)
     // TODO: Cuando se implemente gestión de hubs, reemplazar por selector dinámico
-    const hubId = 2;
+    const hubId = 1;
 
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(isEdit);
@@ -195,7 +195,7 @@ export default function ProductoForm() {
                 {/* Hub selector removido - hubId hardcodeado a 2 */}
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
-                        🛈 <strong>Nota:</strong> Los productos se crean automáticamente en el Hub ID=2.
+                        🛈 <strong>Nota:</strong> Los productos se crean automáticamente en el Hub ID=1.
                         {/* TODO: Agregar selector de Hub cuando se implemente gestión de hubs */}
                     </p>
                 </div>
