@@ -41,9 +41,12 @@ export default function LoginPage() {
             }
         }
 
-        // Password - requerido
+        // Password - requerido y longitud mínima
         if (!password.trim()) {
             errorsCopy.password = "La contraseña es requerida";
+            valid = false;
+        } else if (password.trim().length < 6) {
+            errorsCopy.password = "La contraseña debe tener al menos 6 caracteres";
             valid = false;
         } else {
             errorsCopy.password = "";
@@ -58,8 +61,8 @@ export default function LoginPage() {
 
         try {
             const response = await api.post("/auth/login", {
-                email,
-                password,
+                email: email.trim(),
+                password: password.trim(),
             });
 
             const { token } = response.data;
@@ -99,10 +102,55 @@ export default function LoginPage() {
             navigate("/");
         } catch (error) {
             console.error("Error de login:", error);
+
+            // Manejo específico de errores según código HTTP
+            let errorTitle = "Error de autenticación";
+            let errorMessage = "Ha ocurrido un error inesperado";
+
+            if (error.response) {
+                // El servidor respondió con un código de error
+                const status = error.response.status;
+                const backendMessage = error.response.data?.message;
+
+                switch (status) {
+                    case 401:
+                        // Credenciales incorrectas
+                        errorTitle = "Credenciales incorrectas";
+                        errorMessage = backendMessage || "El correo o la contraseña son incorrectos. Por favor, verifica tus datos.";
+                        // Mostrar error en el campo de contraseña
+                        setErrors(prev => ({
+                            ...prev,
+                            password: "Correo o contraseña incorrectos"
+                        }));
+                        break;
+                    case 403:
+                        // Acceso prohibido
+                        errorTitle = "Acceso prohibido";
+                        errorMessage = backendMessage || "No tienes permisos para acceder a este panel.";
+                        break;
+                    case 404:
+                        // Usuario no encontrado
+                        errorTitle = "Usuario no encontrado";
+                        errorMessage = "No existe una cuenta con ese correo electrónico.";
+                        break;
+                    case 500:
+                        // Error del servidor
+                        errorTitle = "Error del servidor";
+                        errorMessage = "Ocurrió un problema en el servidor. Por favor, intenta más tarde.";
+                        break;
+                    default:
+                        errorMessage = backendMessage || "Error en la autenticación. Por favor, intenta nuevamente.";
+                }
+            } else if (error.request) {
+                // No se recibió respuesta del servidor
+                errorTitle = "Error de conexión";
+                errorMessage = "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
+            }
+
             Swal.fire({
                 icon: "error",
-                title: "Error de autenticación",
-                text: error.response?.data?.message || "Credenciales incorrectas",
+                title: errorTitle,
+                text: errorMessage,
                 confirmButtonColor: "#7CB342",
             });
         } finally {

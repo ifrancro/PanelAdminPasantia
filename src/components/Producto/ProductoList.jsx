@@ -5,13 +5,9 @@
  */
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Package, Power, PowerOff } from "lucide-react";
+import { Plus, Pencil, Package } from "lucide-react";
 import Swal from "sweetalert2";
-import {
-    getAllProductos,
-    activarProducto,
-    desactivarProducto
-} from "../../services/ProductoService";
+import { getAllProductos } from "../../services/ProductoService";
 
 export default function ProductoList() {
     const [productos, setProductos] = useState([]);
@@ -33,43 +29,6 @@ export default function ProductoList() {
         } finally {
             setLoading(false);
         }
-    };
-
-    // === ACCIONES DE ESTADO ===
-    const handleActivar = async (id) => {
-        try {
-            await activarProducto(id);
-            Swal.fire("Activado", "Producto disponible", "success");
-            fetchProductos();
-        } catch (error) {
-            Swal.fire("Error", "No se pudo activar", "error");
-        }
-    };
-
-    const handleDesactivar = async (id, nombre) => {
-        const result = await Swal.fire({
-            title: "¿Desactivar producto?",
-            text: `"${nombre}" ya no estará disponible`,
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Sí, desactivar",
-        });
-        if (result.isConfirmed) {
-            try {
-                await desactivarProducto(id);
-                Swal.fire("Desactivado", "Producto no disponible", "info");
-                fetchProductos();
-            } catch (error) {
-                Swal.fire("Error", "No se pudo desactivar", "error");
-            }
-        }
-    };
-
-    // === BADGE DE ESTADO ===
-    const getEstadoBadge = (estado) => {
-        return estado === "ACTIVO"
-            ? "bg-green-100 text-green-700"
-            : "bg-gray-100 text-gray-700";
     };
 
     if (loading) {
@@ -109,14 +68,13 @@ export default function ProductoList() {
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hub</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                         {productos.length === 0 ? (
                             <tr>
-                                <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                                <td colSpan="3" className="px-6 py-8 text-center text-gray-500">
                                     No hay productos registrados
                                 </td>
                             </tr>
@@ -143,11 +101,6 @@ export default function ProductoList() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoBadge(producto.estado)}`}>
-                                            {producto.estado}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
                                         <div className="flex justify-end gap-2">
                                             <button
                                                 onClick={() => navigate(`/productos/edit/${producto.id}`)}
@@ -156,23 +109,6 @@ export default function ProductoList() {
                                             >
                                                 <Pencil className="w-4 h-4" />
                                             </button>
-                                            {producto.estado === "ACTIVO" ? (
-                                                <button
-                                                    onClick={() => handleDesactivar(producto.id, producto.nombre)}
-                                                    className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg"
-                                                    title="Desactivar"
-                                                >
-                                                    <PowerOff className="w-4 h-4" />
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={() => handleActivar(producto.id)}
-                                                    className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
-                                                    title="Activar"
-                                                >
-                                                    <Power className="w-4 h-4" />
-                                                </button>
-                                            )}
                                         </div>
                                     </td>
                                 </tr>
