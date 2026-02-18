@@ -4,7 +4,7 @@
  */
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Plus, Pencil, Trash2, MapPin, Clock } from "lucide-react";
+import { Calendar, Plus, Pencil, Trash2 } from "lucide-react";
 import Swal from "sweetalert2";
 import { getAllEventos, deleteEvento } from "../../services/EventoService";
 
@@ -101,14 +101,10 @@ export default function EventoList() {
                                 <div className="space-y-2 mb-4">
                                     <div className="flex items-center gap-2 text-sm text-gray-600">
                                         <Calendar className="w-4 h-4 text-gray-400" />
-                                        {evento.fecha ? new Date(evento.fecha).toLocaleDateString() : "Fecha no especificada"}
+                                        {evento.fechaEvento
+                                            ? new Date(evento.fechaEvento + "T00:00:00").toLocaleDateString("es-BO", { year: "numeric", month: "long", day: "numeric" })
+                                            : "Fecha no especificada"}
                                     </div>
-                                    {evento.ubicacion && (
-                                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                                            <MapPin className="w-4 h-4 text-gray-400" />
-                                            {evento.ubicacion}
-                                        </div>
-                                    )}
                                 </div>
 
                                 <div className="flex justify-end gap-2 pt-4 border-t">

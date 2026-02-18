@@ -2,6 +2,7 @@
  * 📄 ClubDetail.jsx
  * Vista detallada de un club con información completa
  * Permite ver todos los datos y ejecutar acciones administrativas
+ * Incluye mapa OpenStreetMap para visualizar ubicación del club
  */
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -16,6 +17,17 @@ import {
     PowerOff
 } from "lucide-react";
 import Swal from "sweetalert2";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// Fix para el ícono del marcador de Leaflet (bug conocido con bundlers)
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+    iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+});
 import {
     getClubById,
     aprobarClub,
@@ -222,6 +234,40 @@ export default function ClubDetail() {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* === MAPA DE UBICACIÓN === */}
+            <div className="bg-white rounded-xl shadow-md p-6">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-herbalife-green" />
+                    Ubicación del Club
+                </h2>
+                {club.lat && club.lng ? (
+                    <div className="rounded-xl overflow-hidden border border-gray-200" style={{ height: "300px" }}>
+                        <MapContainer
+                            center={[club.lat, club.lng]}
+                            zoom={15}
+                            scrollWheelZoom={false}
+                            style={{ height: "100%", width: "100%" }}
+                        >
+                            <TileLayer
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            />
+                            <Marker position={[club.lat, club.lng]}>
+                                <Popup>
+                                    <strong>{club.nombreClub}</strong>
+                                    <br />
+                                    {club.direccion}
+                                </Popup>
+                            </Marker>
+                        </MapContainer>
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-center h-48 bg-gray-50 rounded-xl border border-gray-200">
+                        <p className="text-gray-400">Ubicación no disponible</p>
+                    </div>
+                )}
             </div>
         </div>
     );

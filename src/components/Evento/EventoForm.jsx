@@ -16,16 +16,14 @@ export default function EventoForm() {
     const [formData, setFormData] = useState({
         nombre: "",
         descripcion: "",
-        fecha: "",
-        ubicacion: "",
+        fechaEvento: "",
     });
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(isEdit);
     const [errors, setErrors] = useState({
         nombre: "",
         descripcion: "",
-        fecha: "",
-        ubicacion: "",
+        fechaEvento: "",
     });
 
     useEffect(() => {
@@ -38,8 +36,7 @@ export default function EventoForm() {
             setFormData({
                 nombre: response.data.nombre || "",
                 descripcion: response.data.descripcion || "",
-                fecha: response.data.fecha ? response.data.fecha.split('T')[0] : "",
-                ubicacion: response.data.ubicacion || "",
+                fechaEvento: response.data.fechaEvento || "",
             });
         } catch (error) {
             Swal.fire("Error", "No se pudo cargar el evento", "error");
@@ -86,27 +83,19 @@ export default function EventoForm() {
         }
 
         // Fecha - validar fecha futura
-        if (formData.fecha) {
-            const fechaSeleccionada = new Date(formData.fecha);
+        if (formData.fechaEvento) {
+            const fechaSeleccionada = new Date(formData.fechaEvento + "T00:00:00");
             const hoy = new Date();
-            hoy.setHours(0, 0, 0, 0); // Resetear horas para comparar solo fechas
+            hoy.setHours(0, 0, 0, 0);
 
             if (fechaSeleccionada < hoy) {
-                errorsCopy.fecha = "La fecha del evento debe ser futura";
+                errorsCopy.fechaEvento = "La fecha del evento debe ser futura";
                 valid = false;
             } else {
-                errorsCopy.fecha = "";
+                errorsCopy.fechaEvento = "";
             }
         } else {
-            errorsCopy.fecha = "";
-        }
-
-        // Ubicación - max 200 caracteres
-        if (formData.ubicacion.length > 200) {
-            errorsCopy.ubicacion = "La ubicación no puede exceder 200 caracteres";
-            valid = false;
-        } else {
-            errorsCopy.ubicacion = "";
+            errorsCopy.fechaEvento = "";
         }
 
         setErrors(errorsCopy);
@@ -195,35 +184,18 @@ export default function EventoForm() {
                     <p className="text-gray-500 text-xs mt-1">{formData.descripcion.length}/500 caracteres</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
-                        <input
-                            type="date"
-                            name="fecha"
-                            value={formData.fecha}
-                            onChange={handleChange}
-                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green outline-none ${errors.fecha ? 'border-red-500' : 'border-gray-300'}`}
-                        />
-                        {errors.fecha && (
-                            <p className="text-red-500 text-sm mt-1">{errors.fecha}</p>
-                        )}
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Ubicación</label>
-                        <input
-                            type="text"
-                            name="ubicacion"
-                            value={formData.ubicacion}
-                            onChange={handleChange}
-                            maxLength="200"
-                            placeholder="Lugar del evento"
-                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green outline-none ${errors.ubicacion ? 'border-red-500' : 'border-gray-300'}`}
-                        />
-                        {errors.ubicacion && (
-                            <p className="text-red-500 text-sm mt-1">{errors.ubicacion}</p>
-                        )}
-                    </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Fecha del Evento</label>
+                    <input
+                        type="date"
+                        name="fechaEvento"
+                        value={formData.fechaEvento}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green outline-none ${errors.fechaEvento ? 'border-red-500' : 'border-gray-300'}`}
+                    />
+                    {errors.fechaEvento && (
+                        <p className="text-red-500 text-sm mt-1">{errors.fechaEvento}</p>
+                    )}
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">
