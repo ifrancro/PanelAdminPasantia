@@ -21,12 +21,17 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Fix para el ícono del marcador de Leaflet (bug conocido con bundlers)
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-    iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+// Ícono naranja personalizado para el marcador del mapa
+const orangeIcon = new L.Icon({
+    iconUrl: "data:image/svg+xml;base64," + btoa(`
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="24" height="36">
+            <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#EA580C"/>
+            <circle cx="12" cy="12" r="5" fill="white"/>
+        </svg>
+    `),
+    iconSize: [24, 36],
+    iconAnchor: [12, 36],
+    popupAnchor: [0, -36],
 });
 import {
     getClubById,
@@ -254,7 +259,7 @@ export default function ClubDetail() {
                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                             />
-                            <Marker position={[club.lat, club.lng]}>
+                            <Marker position={[club.lat, club.lng]} icon={orangeIcon}>
                                 <Popup>
                                     <strong>{club.nombreClub}</strong>
                                     <br />
