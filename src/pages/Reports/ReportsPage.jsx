@@ -7,7 +7,6 @@ import { FileText, Download, Loader2 } from 'lucide-react';
 import { getAllClubes } from '../../services/ClubService';
 import {
     generateMembresiaReport,
-    generatePedidosReport,
     generateAsistenciasReport
 } from '../../services/reportService';
 import Swal from 'sweetalert2';
@@ -17,7 +16,6 @@ export default function ReportsPage() {
     const [selectedClubId, setSelectedClubId] = useState('');
     const [loading, setLoading] = useState({
         membresias: false,
-        pedidos: false,
         asistencias: false
     });
 
@@ -45,9 +43,6 @@ export default function ReportsPage() {
             switch (tipo) {
                 case 'membresias':
                     success = await generateMembresiaReport(clubId);
-                    break;
-                case 'pedidos':
-                    success = await generatePedidosReport(clubId);
                     break;
                 case 'asistencias':
                     success = await generateAsistenciasReport(clubId);
@@ -112,8 +107,8 @@ export default function ReportsPage() {
                 </div>
             </div>
 
-            {/* Grid de Reportes */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Grid de Reportes - 2 columnas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Reporte de Membresías */}
                 <ReportCard
                     title="Membresías"
@@ -123,19 +118,10 @@ export default function ReportsPage() {
                     onDownload={() => handleDownload('membresias')}
                 />
 
-                {/* Reporte de Pedidos */}
-                <ReportCard
-                    title="Pedidos"
-                    description="Reporte de pedidos por club y estado (sin precios)"
-                    icon="📦"
-                    loading={loading.pedidos}
-                    onDownload={() => handleDownload('pedidos')}
-                />
-
                 {/* Reporte de Asistencias */}
                 <ReportCard
                     title="Asistencias"
-                    description="Reporte de asistencias por club y fecha"
+                    description="Reporte de asistencias por club con fecha, hora y estado"
                     icon="✅"
                     loading={loading.asistencias}
                     onDownload={() => handleDownload('asistencias')}

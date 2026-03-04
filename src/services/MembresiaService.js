@@ -43,3 +43,10 @@ export const actualizarNivel = (id, nivelId) =>
  */
 export const actualizarPuntos = (id, puntos) =>
     api.patch(`${API_URL}/${id}/puntos`, null, { params: { puntos } });
+
+/**
+ * Obtiene el árbol de referidos de una membresía (admin)
+ * @param {number} id - ID de la membresía raíz
+ * @returns Objeto recursivo con nodos: membresiaId, numeroSocio, nombreCompleto, puntosAcumulados, estado, referidos[]
+ */
+export const getArbolReferidos = (id) => api.get(`${API_URL}/${id}/arbol-referidos`);

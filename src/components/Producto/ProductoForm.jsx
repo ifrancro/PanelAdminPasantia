@@ -19,10 +19,11 @@ export default function ProductoForm() {
     const [formData, setFormData] = useState({
         nombre: "",
         descripcion: "",
+        puntosValor: "",
+        ingredientes: "",
     });
 
-    // ⚠️ HARDCODED: Hub ID = 1 (coincide con el Hub existente en BD)
-    // TODO: Cuando se implemente gestión de hubs, reemplazar por selector dinámico
+    // ⚠️ HARDCODED: Hub ID = 1
     const hubId = 1;
 
     const [loading, setLoading] = useState(false);
@@ -30,6 +31,7 @@ export default function ProductoForm() {
     const [errors, setErrors] = useState({
         nombre: "",
         descripcion: "",
+        puntosValor: "",
     });
 
     useEffect(() => {
@@ -43,8 +45,9 @@ export default function ProductoForm() {
             setFormData({
                 nombre: response.data.nombre || "",
                 descripcion: response.data.descripcion || "",
+                puntosValor: response.data.puntosValor ?? "",
+                ingredientes: response.data.ingredientes || "",
             });
-            // hubId ya está hardcodeado a 1, no se carga del producto
         } catch (error) {
             Swal.fire("Error", "No se pudo cargar el producto", "error");
             navigate("/productos");
@@ -89,6 +92,14 @@ export default function ProductoForm() {
             errorsCopy.descripcion = "";
         }
 
+        // Puntos Valor - debe ser número entero positivo si se ingresa
+        if (formData.puntosValor !== "" && (isNaN(Number(formData.puntosValor)) || Number(formData.puntosValor) < 0)) {
+            errorsCopy.puntosValor = "Debe ser un número entero positivo";
+            valid = false;
+        } else {
+            errorsCopy.puntosValor = "";
+        }
+
         setErrors(errorsCopy);
         return valid;
     };
@@ -106,8 +117,10 @@ export default function ProductoForm() {
         setLoading(true);
         try {
             const payload = {
-                nombre: formData.nombre,
-                descripcion: formData.descripcion,
+                nombre: formData.nombre.trim(),
+                descripcion: formData.descripcion.trim() || null,
+                puntosValor: formData.puntosValor !== "" ? Number(formData.puntosValor) : null,
+                ingredientes: formData.ingredientes.trim() || null,
             };
 
             if (isEdit) {
@@ -192,7 +205,42 @@ export default function ProductoForm() {
                     <p className="text-gray-500 text-xs mt-1">{formData.descripcion.length}/500 caracteres</p>
                 </div>
 
-                {/* Hub selector removido - hubId hardcodeado a 2 */}
+                {/* Puntos Valor */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Puntos Valor
+                    </label>
+                    <input
+                        type="number"
+                        name="puntosValor"
+                        value={formData.puntosValor}
+                        onChange={handleChange}
+                        min="0"
+                        placeholder="Ej: 50"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.puntosValor ? 'border-red-500' : 'border-gray-300'}`}
+                    />
+                    {errors.puntosValor && (
+                        <p className="text-red-500 text-sm mt-1">{errors.puntosValor}</p>
+                    )}
+                </div>
+
+                {/* Ingredientes (privado) */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Ingredientes
+                        <span className="ml-2 text-xs text-gray-400">(privado, visible solo admin/anfitrión)</span>
+                    </label>
+                    <textarea
+                        name="ingredientes"
+                        value={formData.ingredientes}
+                        onChange={handleChange}
+                        rows="3"
+                        placeholder="Lista de ingredientes..."
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none resize-none"
+                    />
+                </div>
+
+                {/* Hub selector removido - hubId hardcodeado a 1 */}
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
                         🛈 <strong>Nota:</strong> Los productos se crean automáticamente en el Hub ID=1.
