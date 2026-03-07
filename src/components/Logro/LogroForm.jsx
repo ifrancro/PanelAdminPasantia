@@ -34,7 +34,7 @@ export default function LogroForm() {
                 nombre: response.data.nombre || "",
                 descripcion: response.data.descripcion || "",
                 iconoUrl: response.data.iconoUrl || "",
-                tipoRequisito: response.data.tipoRequisito || "",
+                tipoRequisito: response.data.tipoRequisito !== null && response.data.tipoRequisito !== undefined ? response.data.tipoRequisito.toString() : "",
             });
         } catch (error) {
             Swal.fire("Error", "No se pudo cargar el logro", "error");
@@ -85,12 +85,12 @@ export default function LogroForm() {
             errorsCopy.iconoUrl = "";
         }
 
-        // TipoRequisito - solo valores permitidos (opcional)
-        if (formData.tipoRequisito && formData.tipoRequisito.trim()) {
-            const tiposPermitidos = ['VISITAS', 'CONSUMO', 'REFERIDOS'];
-            const tipoUpper = formData.tipoRequisito.trim().toUpperCase();
-            if (!tiposPermitidos.includes(tipoUpper)) {
-                errorsCopy.tipoRequisito = "Tipo inválido. Usa: VISITAS, CONSUMO o REFERIDOS";
+        // TipoRequisito - debe ser un número entero positivo (opcional)
+        if (formData.tipoRequisito && formData.tipoRequisito.toString().trim()) {
+            const tipoValue = formData.tipoRequisito.toString().trim();
+            const numero = parseInt(tipoValue, 10);
+            if (isNaN(numero) || numero <= 0 || !Number.isInteger(numero)) {
+                errorsCopy.tipoRequisito = "Debe ser un número entero positivo (ej: 5, 10, 20)";
                 valid = false;
             } else {
                 errorsCopy.tipoRequisito = "";
@@ -113,11 +113,19 @@ export default function LogroForm() {
 
         setLoading(true);
         try {
+            // Preparar los datos para enviar, convirtiendo tipoRequisito a número si existe
+            const payload = {
+                ...formData,
+                tipoRequisito: formData.tipoRequisito && formData.tipoRequisito.toString().trim() 
+                    ? parseInt(formData.tipoRequisito.toString().trim(), 10) 
+                    : null,
+            };
+
             if (isEdit) {
-                await updateLogro(id, formData);
+                await updateLogro(id, payload);
                 Swal.fire("Actualizado", "Logro actualizado correctamente", "success");
             } else {
-                await createLogro(formData);
+                await createLogro(payload);
                 Swal.fire("Creado", "Logro creado correctamente", "success");
             }
             navigate("/logros");
@@ -198,13 +206,18 @@ export default function LogroForm() {
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Requisito</label>
                     <input
-                        type="text"
+                        type="number"
                         name="tipoRequisito"
                         value={formData.tipoRequisito}
                         onChange={handleChange}
-                        placeholder="Ej: VISITAS, CONSUMO, REFERIDOS"
+                        placeholder="Ej: 5, 10, 20"
+                        min="1"
+                        step="1"
                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.tipoRequisito ? 'border-red-500' : 'border-gray-300'}`}
                     />
+                    <p className="text-gray-500 text-xs mt-1">
+                        Ingresa la cantidad de asistencias requeridas para obtener el logro (solo el número)
+                    </p>
                     {errors.tipoRequisito && (
                         <p className="text-red-500 text-sm mt-1">{errors.tipoRequisito}</p>
                     )}

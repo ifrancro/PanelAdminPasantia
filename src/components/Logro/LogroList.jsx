@@ -109,7 +109,9 @@ export default function LogroList() {
                                         {logro.descripcion || "-"}
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-600">
-                                        {logro.tipoRequisito || "-"}
+                                        {logro.tipoRequisito !== null && logro.tipoRequisito !== undefined 
+                                            ? `${logro.tipoRequisito} asistencias` 
+                                            : "-"}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <button
