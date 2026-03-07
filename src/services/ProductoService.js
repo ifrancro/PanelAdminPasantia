@@ -48,3 +48,10 @@ export const activarProducto = (id) => api.patch(`${API_URL}/${id}/activar`);
 
 /** Desactiva un producto (no disponible) */
 export const desactivarProducto = (id) => api.patch(`${API_URL}/${id}/desactivar`);
+
+/** Aprueba o rechaza un producto (solo ADMIN)
+ * @param {number} id
+ * @param {"APROBADO"|"RECHAZADO"} estadoAprobacion
+ */
+export const cambiarEstadoAprobacionProducto = (id, estadoAprobacion) =>
+    api.patch(`${API_URL}/${id}/estado-aprobacion`, null, { params: { estadoAprobacion } });

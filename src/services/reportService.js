@@ -95,83 +95,25 @@ export const generateMembresiaReport = async (clubId = null) => {
 };
 
 /**
- * Genera reporte de pedidos en PDF (SIN PRECIOS)
- */
-export const generatePedidosReport = async (clubId = null) => {
-    try {
-        const endpoint = clubId ? `/pedidos/club/${clubId}` : '/pedidos';
-        const response = await api.get(endpoint);
-        const pedidos = response.data;
-
-        const doc = new jsPDF();
-
-        // Título
-        doc.setFontSize(18);
-        doc.setFont(undefined, 'bold');
-        doc.text('REPORTE DE PEDIDOS', 105, 15, { align: 'center' });
-
-        doc.setFontSize(10);
-        doc.setFont(undefined, 'normal');
-        const fecha = new Date().toLocaleString('es-ES');
-        doc.text(`Generado: ${fecha}`, 105, 22, { align: 'center' });
-
-        if (clubId) {
-            doc.setFontSize(9);
-            doc.text(`Filtrado por Club ID: ${clubId}`, 14, 30);
-        }
-
-        doc.setFontSize(10);
-        doc.setFont(undefined, 'bold');
-        doc.text(`Total de pedidos: ${pedidos.length}`, 14, clubId ? 36 : 30);
-
-        // Tabla (SIN columna de precio)
-        const tableData = pedidos.map(p => [
-            p.id,
-            p.clubNombre || 'N/A',
-            p.horarioDeseado || 'N/A',
-            p.tipoConsumo || 'N/A',
-            p.estado || 'N/A',
-            new Date(p.fechaPedido).toLocaleDateString('es-ES')
-        ]);
-
-        autoTable(doc, {
-            startY: clubId ? 40 : 35,
-            head: [['ID', 'Club', 'Horario', 'Tipo', 'Estado', 'Fecha']],
-            body: tableData,
-            theme: 'grid',
-            headStyles: { fillColor: [124, 179, 66] },
-            styles: { fontSize: 8 },
-        });
-
-        const pageCount = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.setFontSize(8);
-            doc.setFont(undefined, 'italic');
-            doc.text(
-                'Herbalife Clubes - Sistema de Gestión',
-                105,
-                doc.internal.pageSize.height - 10,
-                { align: 'center' }
-            );
-        }
-
-        doc.save(`reporte_pedidos_${Date.now()}.pdf`);
-        return true;
-    } catch (error) {
-        console.error('Error generando reporte:', error);
-        throw new Error('No se pudo generar el reporte');
-    }
-};
-
-/**
  * Genera reporte de asistencias en PDF
+ * Campos del AsistenciaDTO: id, membresiaId, membresiaNumeroSocio, clubId, clubNombre, fechaHora, fechaDia, estado, rachaActual, rachaMaxima
  */
 export const generateAsistenciasReport = async (clubId = null) => {
     try {
-        const endpoint = clubId ? `/asistencias/club/${clubId}` : '/asistencias';
-        const response = await api.get(endpoint);
-        const asistencias = response.data;
+        // El endpoint de asistencias por club usa /asistencias/club/{clubId}
+        // Si no hay clubId, intentamos traer todas (puede no existir ese endpoint general)
+        let asistencias = [];
+        if (clubId) {
+            const response = await api.get(`/asistencias/club/${clubId}`);
+            asistencias = response.data;
+        } else {
+            // Obtener asistencias de todos los clubes activos
+            const clubesResponse = await api.get('/clubes');
+            const clubes = clubesResponse.data.filter(c => c.estado === 'ACTIVO');
+            const allPromises = clubes.map(club => api.get(`/asistencias/club/${club.id}`).catch(() => ({ data: [] })));
+            const allResponses = await Promise.all(allPromises);
+            asistencias = allResponses.flatMap(r => r.data);
+        }
 
         const doc = new jsPDF();
 
@@ -193,21 +135,40 @@ export const generateAsistenciasReport = async (clubId = null) => {
         doc.setFont(undefined, 'bold');
         doc.text(`Total de asistencias: ${asistencias.length}`, 14, clubId ? 36 : 30);
 
-        const tableData = asistencias.map(a => [
-            a.id,
-            a.socioNombre || 'N/A',
-            a.clubNombre || 'N/A',
-            new Date(a.fechaAsistencia).toLocaleDateString('es-ES'),
-            a.horaAsistencia || 'N/A'
-        ]);
+        const tableData = asistencias.map(a => {
+            // fechaDia viene como 'YYYY-MM-DD' (LocalDate)
+            let fechaFormatted = 'N/A';
+            if (a.fechaDia) {
+                const [year, month, day] = a.fechaDia.split('-');
+                fechaFormatted = `${day}/${month}/${year}`;
+            }
+
+            // fechaHora viene como 'YYYY-MM-DDTHH:mm:ss' (LocalDateTime)
+            let horaFormatted = 'N/A';
+            if (a.fechaHora) {
+                const dt = new Date(a.fechaHora);
+                if (!isNaN(dt.getTime())) {
+                    horaFormatted = dt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                }
+            }
+
+            return [
+                a.id,
+                a.membresiaNumeroSocio || `Membresía #${a.membresiaId}`,
+                a.clubNombre || 'N/A',
+                fechaFormatted,
+                horaFormatted,
+                a.estado || 'N/A',
+            ];
+        });
 
         autoTable(doc, {
             startY: clubId ? 40 : 35,
-            head: [['ID', 'Socio', 'Club', 'Fecha', 'Hora']],
+            head: [['ID', 'N° Socio', 'Club', 'Fecha', 'Hora', 'Estado']],
             body: tableData,
             theme: 'grid',
             headStyles: { fillColor: [124, 179, 66] },
-            styles: { fontSize: 9 },
+            styles: { fontSize: 8 },
         });
 
         const pageCount = doc.internal.getNumberOfPages();
@@ -226,7 +187,7 @@ export const generateAsistenciasReport = async (clubId = null) => {
         doc.save(`reporte_asistencias_${Date.now()}.pdf`);
         return true;
     } catch (error) {
-        console.error('Error generando reporte:', error);
-        throw new Error('No se pudo generar el reporte');
+        console.error('Error generando reporte de asistencias:', error);
+        throw new Error('No se pudo generar el reporte de asistencias');
     }
 };
