@@ -14,6 +14,11 @@ export default function LogroForm() {
         descripcion: "",
         iconoUrl: "",
         tipoRequisito: "",
+        fechaInicio: "",
+        fechaFin: "",
+        tipoMetrica: "",
+        metaCantidad: "",
+        puntosRecompensa: "",
     });
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(isEdit);
@@ -21,6 +26,11 @@ export default function LogroForm() {
         nombre: "",
         iconoUrl: "",
         tipoRequisito: "",
+        fechaInicio: "",
+        fechaFin: "",
+        tipoMetrica: "",
+        metaCantidad: "",
+        puntosRecompensa: "",
     });
 
     useEffect(() => {
@@ -30,11 +40,33 @@ export default function LogroForm() {
     const fetchLogro = async () => {
         try {
             const response = await getLogroById(id);
+            // Formatear fechas de LocalDate a YYYY-MM-DD
+            const formatDate = (date) => {
+                if (!date) return "";
+                if (typeof date === 'string') {
+                    // Si viene en formato ISO (YYYY-MM-DDTHH:mm:ss) o YYYY-MM-DD, extraer solo la fecha
+                    return date.split('T')[0];
+                }
+                // Si es un objeto Date, convertir a YYYY-MM-DD
+                if (date instanceof Date) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                }
+                return "";
+            };
+
             setFormData({
                 nombre: response.data.nombre || "",
                 descripcion: response.data.descripcion || "",
                 iconoUrl: response.data.iconoUrl || "",
                 tipoRequisito: response.data.tipoRequisito !== null && response.data.tipoRequisito !== undefined ? response.data.tipoRequisito.toString() : "",
+                fechaInicio: formatDate(response.data.fechaInicio) || "",
+                fechaFin: formatDate(response.data.fechaFin) || "",
+                tipoMetrica: response.data.tipoMetrica || "",
+                metaCantidad: response.data.metaCantidad !== null && response.data.metaCantidad !== undefined ? response.data.metaCantidad.toString() : "",
+                puntosRecompensa: response.data.puntosRecompensa !== null && response.data.puntosRecompensa !== undefined ? response.data.puntosRecompensa.toString() : "",
             });
         } catch (error) {
             Swal.fire("Error", "No se pudo cargar el logro", "error");
@@ -99,6 +131,98 @@ export default function LogroForm() {
             errorsCopy.tipoRequisito = "";
         }
 
+        // FechaInicio - obligatorio y formato YYYY-MM-DD
+        if (!formData.fechaInicio.trim()) {
+            errorsCopy.fechaInicio = "La fecha de inicio es requerida";
+            valid = false;
+        } else {
+            const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!fechaRegex.test(formData.fechaInicio.trim())) {
+                errorsCopy.fechaInicio = "Formato inválido. Use YYYY-MM-DD";
+                valid = false;
+            } else {
+                const fechaInicio = new Date(formData.fechaInicio);
+                if (isNaN(fechaInicio.getTime())) {
+                    errorsCopy.fechaInicio = "Fecha inválida";
+                    valid = false;
+                } else {
+                    errorsCopy.fechaInicio = "";
+                }
+            }
+        }
+
+        // FechaFin - obligatorio y formato YYYY-MM-DD
+        if (!formData.fechaFin.trim()) {
+            errorsCopy.fechaFin = "La fecha de fin es requerida";
+            valid = false;
+        } else {
+            const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!fechaRegex.test(formData.fechaFin.trim())) {
+                errorsCopy.fechaFin = "Formato inválido. Use YYYY-MM-DD";
+                valid = false;
+            } else {
+                const fechaFin = new Date(formData.fechaFin);
+                if (isNaN(fechaFin.getTime())) {
+                    errorsCopy.fechaFin = "Fecha inválida";
+                    valid = false;
+                } else {
+                    errorsCopy.fechaFin = "";
+                }
+            }
+        }
+
+        // Validar que fechaInicio < fechaFin
+        if (formData.fechaInicio.trim() && formData.fechaFin.trim()) {
+            const fechaInicio = new Date(formData.fechaInicio);
+            const fechaFin = new Date(formData.fechaFin);
+            if (fechaInicio >= fechaFin) {
+                errorsCopy.fechaFin = "La fecha de fin debe ser posterior a la fecha de inicio";
+                valid = false;
+            }
+        }
+
+        // TipoMetrica - debe ser uno de los valores permitidos (opcional)
+        if (formData.tipoMetrica && formData.tipoMetrica.trim()) {
+            const tiposPermitidos = ['CONSUMO', 'ASISTENCIA', 'REFERIDOS'];
+            const tipoUpper = formData.tipoMetrica.trim().toUpperCase();
+            if (!tiposPermitidos.includes(tipoUpper)) {
+                errorsCopy.tipoMetrica = "Tipo inválido. Use: CONSUMO, ASISTENCIA o REFERIDOS";
+                valid = false;
+            } else {
+                errorsCopy.tipoMetrica = "";
+            }
+        } else {
+            errorsCopy.tipoMetrica = "";
+        }
+
+        // MetaCantidad - debe ser un número entero positivo (opcional)
+        if (formData.metaCantidad && formData.metaCantidad.toString().trim()) {
+            const metaValue = formData.metaCantidad.toString().trim();
+            const numero = parseInt(metaValue, 10);
+            if (isNaN(numero) || numero <= 0 || !Number.isInteger(numero)) {
+                errorsCopy.metaCantidad = "Debe ser un número entero positivo (ej: 10)";
+                valid = false;
+            } else {
+                errorsCopy.metaCantidad = "";
+            }
+        } else {
+            errorsCopy.metaCantidad = "";
+        }
+
+        // PuntosRecompensa - debe ser un número entero positivo (opcional)
+        if (formData.puntosRecompensa && formData.puntosRecompensa.toString().trim()) {
+            const puntosValue = formData.puntosRecompensa.toString().trim();
+            const numero = parseInt(puntosValue, 10);
+            if (isNaN(numero) || numero <= 0 || !Number.isInteger(numero)) {
+                errorsCopy.puntosRecompensa = "Debe ser un número entero positivo";
+                valid = false;
+            } else {
+                errorsCopy.puntosRecompensa = "";
+            }
+        } else {
+            errorsCopy.puntosRecompensa = "";
+        }
+
         setErrors(errorsCopy);
         return valid;
     };
@@ -113,11 +237,20 @@ export default function LogroForm() {
 
         setLoading(true);
         try {
-            // Preparar los datos para enviar, convirtiendo tipoRequisito a número si existe
+            // Preparar los datos para enviar, convirtiendo valores a los tipos correctos
             const payload = {
                 ...formData,
                 tipoRequisito: formData.tipoRequisito && formData.tipoRequisito.toString().trim() 
                     ? parseInt(formData.tipoRequisito.toString().trim(), 10) 
+                    : null,
+                fechaInicio: formData.fechaInicio.trim() || null,
+                fechaFin: formData.fechaFin.trim() || null,
+                tipoMetrica: formData.tipoMetrica.trim() || null,
+                metaCantidad: formData.metaCantidad && formData.metaCantidad.toString().trim() 
+                    ? parseInt(formData.metaCantidad.toString().trim(), 10) 
+                    : null,
+                puntosRecompensa: formData.puntosRecompensa && formData.puntosRecompensa.toString().trim() 
+                    ? parseInt(formData.puntosRecompensa.toString().trim(), 10) 
                     : null,
             };
 
@@ -145,7 +278,7 @@ export default function LogroForm() {
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-md overflow-hidden max-w-2xl mx-auto">
+        <div className="bg-white rounded-xl shadow-md overflow-hidden max-w-4xl mx-auto">
             <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center gap-4">
                     <button onClick={() => navigate("/logros")} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -221,6 +354,90 @@ export default function LogroForm() {
                     {errors.tipoRequisito && (
                         <p className="text-red-500 text-sm mt-1">{errors.tipoRequisito}</p>
                     )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de Inicio *</label>
+                        <input
+                            type="date"
+                            name="fechaInicio"
+                            value={formData.fechaInicio}
+                            onChange={handleChange}
+                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.fechaInicio ? 'border-red-500' : 'border-gray-300'}`}
+                        />
+                        {errors.fechaInicio && (
+                            <p className="text-red-500 text-sm mt-1">{errors.fechaInicio}</p>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de Fin *</label>
+                        <input
+                            type="date"
+                            name="fechaFin"
+                            value={formData.fechaFin}
+                            onChange={handleChange}
+                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.fechaFin ? 'border-red-500' : 'border-gray-300'}`}
+                        />
+                        {errors.fechaFin && (
+                            <p className="text-red-500 text-sm mt-1">{errors.fechaFin}</p>
+                        )}
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Métrica</label>
+                    <select
+                        name="tipoMetrica"
+                        value={formData.tipoMetrica}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.tipoMetrica ? 'border-red-500' : 'border-gray-300'}`}
+                    >
+                        <option value="">Seleccione un tipo</option>
+                        <option value="CONSUMO">CONSUMO</option>
+                        <option value="ASISTENCIA">ASISTENCIA</option>
+                        <option value="REFERIDOS">REFERIDOS</option>
+                    </select>
+                    {errors.tipoMetrica && (
+                        <p className="text-red-500 text-sm mt-1">{errors.tipoMetrica}</p>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Meta Cantidad</label>
+                        <input
+                            type="number"
+                            name="metaCantidad"
+                            value={formData.metaCantidad}
+                            onChange={handleChange}
+                            placeholder="Ej: 10"
+                            min="1"
+                            step="1"
+                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.metaCantidad ? 'border-red-500' : 'border-gray-300'}`}
+                        />
+                        {errors.metaCantidad && (
+                            <p className="text-red-500 text-sm mt-1">{errors.metaCantidad}</p>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Puntos de Recompensa</label>
+                        <input
+                            type="number"
+                            name="puntosRecompensa"
+                            value={formData.puntosRecompensa}
+                            onChange={handleChange}
+                            placeholder="Ej: 100"
+                            min="1"
+                            step="1"
+                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.puntosRecompensa ? 'border-red-500' : 'border-gray-300'}`}
+                        />
+                        {errors.puntosRecompensa && (
+                            <p className="text-red-500 text-sm mt-1">{errors.puntosRecompensa}</p>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">
