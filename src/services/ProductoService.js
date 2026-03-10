@@ -55,3 +55,26 @@ export const desactivarProducto = (id) => api.patch(`${API_URL}/${id}/desactivar
  */
 export const cambiarEstadoAprobacionProducto = (id, estadoAprobacion) =>
     api.patch(`${API_URL}/${id}/estado-aprobacion`, null, { params: { estadoAprobacion } });
+
+// === ENDPOINTS OPTIMIZADOS POR ESTADO DE APROBACIÓN ===
+
+/** Obtiene todos los productos con estadoAprobacion = PENDIENTE */
+export const getProductosPendientes = () => api.get(`${API_URL}/pendientes`);
+
+/**
+ * Obtiene productos aprobados (inventario activo)
+ * @param {number|null} clubId - Opcional, filtra por club creador
+ */
+export const getProductosAprobados = (clubId = null) => {
+    const params = clubId ? { clubId } : {};
+    return api.get(`${API_URL}/aprobados`, { params });
+};
+
+/**
+ * Obtiene productos rechazados (historial)
+ * @param {number|null} clubId - Opcional, filtra por club creador
+ */
+export const getProductosRechazados = (clubId = null) => {
+    const params = clubId ? { clubId } : {};
+    return api.get(`${API_URL}/rechazados`, { params });
+};
