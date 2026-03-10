@@ -114,14 +114,12 @@ export default function SoporteDetail() {
                     <div>
                         <p className="text-xs text-gray-500">Usuario</p>
                         <p className="font-medium text-gray-800">
-                            {ticket.usuario?.nombre} {ticket.usuario?.apellido}
+                            {ticket.usuarioNombre || "—"}
                         </p>
                     </div>
                     <div>
-                        <p className="text-xs text-gray-500">Email</p>
-                        <p className="font-medium text-gray-800">
-                            {ticket.usuario?.email || "-"}
-                        </p>
+                        <p className="text-xs text-gray-500">Ticket</p>
+                        <p className="font-medium text-gray-800">#{ticket.id}</p>
                     </div>
                     <div>
                         <p className="text-xs text-gray-500">Fecha Creación</p>
@@ -130,9 +128,9 @@ export default function SoporteDetail() {
                         </p>
                     </div>
                     <div>
-                        <p className="text-xs text-gray-500">Última Actualización</p>
+                        <p className="text-xs text-gray-500">Fecha de Respuesta</p>
                         <p className="font-medium text-gray-800">
-                            {ticket.fechaActualizacion ? new Date(ticket.fechaActualizacion).toLocaleString() : "-"}
+                            {ticket.fechaRespuesta ? new Date(ticket.fechaRespuesta).toLocaleString() : "Sin respuesta aún"}
                         </p>
                     </div>
                 </div>
@@ -140,18 +138,18 @@ export default function SoporteDetail() {
 
             {/* Descripción */}
             <div className="bg-white rounded-xl shadow-md p-6">
-                <h3 className="font-semibold text-gray-800 mb-3">Descripción del Problema</h3>
+                <h3 className="font-semibold text-gray-800 mb-3">Mensaje del Usuario</h3>
                 <p className="text-gray-700 whitespace-pre-wrap">
-                    {ticket.descripcion || "Sin descripción"}
+                    {ticket.mensaje || "Sin mensaje"}
                 </p>
             </div>
 
             {/* Respuesta del admin (si existe) */}
-            {ticket.respuesta && (
+            {ticket.respuestaAdmin && (
                 <div className="bg-green-50 border border-green-200 rounded-xl p-6">
                     <h3 className="font-semibold text-green-800 mb-3">Respuesta del Administrador</h3>
                     <p className="text-green-900 whitespace-pre-wrap">
-                        {ticket.respuesta}
+                        {ticket.respuestaAdmin}
                     </p>
                 </div>
             )}

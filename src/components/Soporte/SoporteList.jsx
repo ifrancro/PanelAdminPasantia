@@ -142,10 +142,10 @@ export default function SoporteList() {
                                             {ticket.asunto || "Sin asunto"}
                                         </h3>
                                         <p className="text-sm text-gray-600 line-clamp-2">
-                                            {ticket.descripcion || "Sin descripción"}
+                                            {ticket.mensaje || "Sin mensaje"}
                                         </p>
                                         <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                                            <span>Usuario: {ticket.usuario?.nombre} {ticket.usuario?.apellido}</span>
+                                            <span>Usuario: {ticket.usuarioNombre || "—"}</span>
                                             {ticket.fechaCreacion && (
                                                 <span>
                                                     {new Date(ticket.fechaCreacion).toLocaleDateString()}
