@@ -5,8 +5,9 @@
  *   - Vista Lista: tabla plana (BFS) con filtro numérico de líneas
  */
 import React, { useEffect, useState, useMemo } from "react";
-import { X, Users, ChevronDown, ChevronRight, Star, List, GitFork, Filter } from "lucide-react";
+import { X, Users, ChevronDown, ChevronRight, Star, List, GitFork, Filter, Network } from "lucide-react";
 import { getArbolReferidos } from "../../services/MembresiaService";
+import VistaArbolD3 from "./VistaArbolD3";
 
 // ─── Constantes ────────────────────────────────────────────────────────────
 
@@ -279,7 +280,7 @@ export default function ArbolReferidosModal({ membresiaId, nombreSocio, onClose 
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
 
                 {/* Header */}
                 <div className="flex items-center justify-between p-5 border-b border-gray-200">
@@ -314,8 +315,18 @@ export default function ArbolReferidosModal({ membresiaId, nombreSocio, onClose 
                                     ? "border-herbalife-green text-herbalife-green"
                                     : "border-transparent text-gray-500 hover:text-gray-700"}`}
                         >
+                            <Network className="w-4 h-4" />
+                            Árbol Genealógico
+                        </button>
+                        <button
+                            onClick={() => setTab("jerarquia")}
+                            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors
+                                ${tab === "jerarquia"
+                                    ? "border-herbalife-green text-herbalife-green"
+                                    : "border-transparent text-gray-500 hover:text-gray-700"}`}
+                        >
                             <GitFork className="w-4 h-4" />
-                            Vista Árbol
+                            Jerarquía
                         </button>
                         <button
                             onClick={() => setTab("lista")}
@@ -346,6 +357,9 @@ export default function ArbolReferidosModal({ membresiaId, nombreSocio, onClose 
                         <div className="text-center py-8 text-red-500 text-sm">{error}</div>
                     )}
                     {!loading && !error && arbol && tab === "arbol" && (
+                        <VistaArbolD3 arbol={arbol} />
+                    )}
+                    {!loading && !error && arbol && tab === "jerarquia" && (
                         <NodoReferido nodo={arbol} nivel={0} />
                     )}
                     {!loading && !error && arbol && tab === "lista" && (

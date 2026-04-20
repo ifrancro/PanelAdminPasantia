@@ -117,7 +117,7 @@ export default function Sidebar() {
                         <span className="text-white font-bold text-lg">H</span>
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold text-gray-800">Herbalife</h1>
+                        <h1 className="text-lg font-bold text-gray-800">NutriClub</h1>
                         <p className="text-xs text-gray-500">Panel Admin</p>
                     </div>
                 </div>
