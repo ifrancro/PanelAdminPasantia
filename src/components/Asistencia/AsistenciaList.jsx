@@ -7,6 +7,28 @@ import { CalendarCheck, Users, Store } from "lucide-react";
 import Swal from "sweetalert2";
 import { getAllAsistencias } from "../../services/AsistenciaService";
 
+// El backend envía LocalDateTime sin zona (UTC en el servidor). Lo marcamos
+// como UTC con 'Z' y lo formateamos explícitamente en hora de Bolivia.
+const formatoBolivia = new Intl.DateTimeFormat("es-BO", {
+    timeZone: "America/La_Paz",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+});
+
+const formatFechaHoraBolivia = (valor) => {
+    if (!valor) return "-";
+    const iso = typeof valor === "string" && !/[zZ]|[+-]\d{2}:?\d{2}$/.test(valor)
+        ? `${valor}Z`
+        : valor;
+    const fecha = new Date(iso);
+    return Number.isNaN(fecha.getTime()) ? "-" : formatoBolivia.format(fecha);
+};
+
 export default function AsistenciaList() {
     const [asistencias, setAsistencias] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -81,9 +103,7 @@ export default function AsistenciaList() {
                             asistencias.map((asistencia) => (
                                 <tr key={asistencia.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 text-sm text-gray-800">
-                                        {asistencia.fechaHora
-                                            ? new Date(asistencia.fechaHora).toLocaleString()
-                                            : "-"}
+                                        {formatFechaHoraBolivia(asistencia.fechaHora)}
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
