@@ -4,7 +4,7 @@
  *   - Vista Árbol: colapsable, jerárquica
  *   - Vista Lista: tabla plana (BFS) con filtro numérico de líneas
  */
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { X, Users, ChevronDown, ChevronRight, Star, List, GitFork, Filter, Network } from "lucide-react";
 import { getArbolReferidos } from "../../services/MembresiaService";
 import VistaArbolD3 from "./VistaArbolD3";
@@ -246,18 +246,25 @@ export default function ArbolReferidosModal({ membresiaId, nombreSocio, onClose 
     const [arbol, setArbol] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [tab, setTab] = useState("arbol"); // "arbol" | "lista"
+    const [tab, setTab] = useState("arbol");
+    const [raizId, setRaizId] = useState(membresiaId);
+    const [raizNombre, setRaizNombre] = useState(nombreSocio);
 
     useEffect(() => {
-        if (!membresiaId) return;
+        setRaizId(membresiaId);
+        setRaizNombre(nombreSocio);
+    }, [membresiaId, nombreSocio]);
+
+    useEffect(() => {
+        if (!raizId) return;
         fetchArbol();
-    }, [membresiaId]);
+    }, [raizId]);
 
     const fetchArbol = async () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await getArbolReferidos(membresiaId);
+            const response = await getArbolReferidos(raizId);
             setArbol(response.data);
         } catch (err) {
             const status = err?.response?.status;
@@ -275,6 +282,22 @@ export default function ArbolReferidosModal({ membresiaId, nombreSocio, onClose 
         }
     };
 
+    const handleNodoClick = useCallback((nodeDatum) => {
+        const id = nodeDatum?.attributes?.membresiaId;
+        const name = nodeDatum?.name;
+        if (id && id !== raizId) {
+            setRaizId(id);
+            setRaizNombre(name);
+        }
+    }, [raizId]);
+
+    const handleVolverRaiz = () => {
+        setRaizId(membresiaId);
+        setRaizNombre(nombreSocio);
+    };
+
+    const esNavegando = raizId !== membresiaId;
+
     const totalRed = arbol ? contarNodos(arbol) - 1 : 0;
     const listaPlana = useMemo(() => arbol ? aplanarArbolBFS(arbol) : [], [arbol]);
 
@@ -291,7 +314,15 @@ export default function ArbolReferidosModal({ membresiaId, nombreSocio, onClose 
                         <div>
                             <h3 className="text-lg font-semibold text-gray-800">Red de Referidos</h3>
                             <p className="text-sm text-gray-500">
-                                <span className="font-medium text-gray-700">{nombreSocio}</span>
+                                <span className="font-medium text-gray-700">{raizNombre}</span>
+                                {esNavegando && (
+                                    <button
+                                        onClick={handleVolverRaiz}
+                                        className="ml-2 px-2 py-0.5 text-xs bg-herbalife-green/10 text-herbalife-green rounded-full font-medium hover:bg-herbalife-green/20 transition-colors"
+                                    >
+                                        ← Volver a {nombreSocio}
+                                    </button>
+                                )}
                                 {!loading && arbol && (
                                     <span className="ml-2 px-2 py-0.5 bg-herbalife-green/10 text-herbalife-green rounded-full text-xs font-medium">
                                         {totalRed} persona{totalRed !== 1 ? "s" : ""} en red
@@ -357,7 +388,7 @@ export default function ArbolReferidosModal({ membresiaId, nombreSocio, onClose 
                         <div className="text-center py-8 text-red-500 text-sm">{error}</div>
                     )}
                     {!loading && !error && arbol && tab === "arbol" && (
-                        <VistaArbolD3 arbol={arbol} />
+                        <VistaArbolD3 arbol={arbol} onNodoClick={handleNodoClick} />
                     )}
                     {!loading && !error && arbol && tab === "jerarquia" && (
                         <NodoReferido nodo={arbol} nivel={0} />

@@ -23,7 +23,7 @@ const NIVEL_BORDER = [
 ];
 
 const NODE_W = 230;
-const NODE_H = 96;
+const NODE_H = 112;
 
 function toD3TreeData(nodo, nivel = 0) {
     if (!nodo) return null;
@@ -34,6 +34,7 @@ function toD3TreeData(nodo, nivel = 0) {
             puntosAcumulados: nodo.puntosAcumulados ?? 0,
             estado: nodo.estado || "",
             membresiaId: nodo.membresiaId,
+            clubNombre: nodo.clubNombre || "",
             nivel,
         },
         children: (nodo.referidos || []).map((h) => toD3TreeData(h, nivel + 1)),
@@ -88,6 +89,11 @@ function CustomNode({ nodeDatum, toggleNode, onSelect }) {
                         <p className="text-[11px] text-gray-500 font-mono truncate">
                             {nodeDatum.attributes?.numeroSocio}
                         </p>
+                        {nodeDatum.attributes?.clubNombre && (
+                            <p className="text-[10px] text-gray-400 truncate leading-tight">
+                                {nodeDatum.attributes.clubNombre}
+                            </p>
+                        )}
                     </div>
                 </div>
                 <div className="flex items-center justify-between mt-1.5 gap-1">
