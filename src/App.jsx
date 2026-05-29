@@ -34,7 +34,6 @@ import ClubPage from "./pages/ClubPage";           // ✅ Fase 1
 // HubPage removido - gestión eliminada
 import ProductoPage from "./pages/ProductoPage";   // ✅ Fase 1
 import NivelSocioPage from "./pages/NivelSocioPage"; // ✅ Fase 1
-import LogroPage from "./pages/LogroPage";         // ✅ Fase 1
 
 // Páginas protegidas - Fase 2
 import UsuarioPage from "./pages/UsuarioPage";     // ✅ Fase 2
@@ -80,7 +79,6 @@ export default function App() {
             {/* === CATÁLOGO === */}
             <Route path="productos/*" element={<ProductoPage />} />
             <Route path="niveles-socio/*" element={<NivelSocioPage />} />
-            <Route path="logros/*" element={<LogroPage />} />
 
             {/* === OPERACIONES === */}
             <Route path="asistencias/*" element={<AsistenciaPage />} />

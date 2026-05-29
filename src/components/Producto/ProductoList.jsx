@@ -1,6 +1,6 @@
 /**
  * 📦 ProductoList.jsx
- * Dos pestañas: catálogo general + bandeja de pendientes (igual que Logros)
+ * Dos pestañas: catálogo general + bandeja de pendientes
  */
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";

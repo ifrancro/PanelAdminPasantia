@@ -8,7 +8,6 @@ import {
     UserCheck,      // Membresías
     Package,        // Productos
     CalendarCheck,  // Asistencias
-    Trophy,         // Logros
     Calendar,       // Eventos
     HeadphonesIcon, // Soporte
     Layers,         // Niveles Socio
@@ -67,7 +66,6 @@ export default function Sidebar() {
             links: [
                 { to: "/productos", label: "Productos", icon: Package },
                 { to: "/niveles-socio", label: "Niveles Socio", icon: Layers },
-                { to: "/logros", label: "Logros", icon: Trophy },
             ],
         },
 
