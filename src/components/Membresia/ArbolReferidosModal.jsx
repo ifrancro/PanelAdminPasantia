@@ -56,7 +56,7 @@ function aplanarArbolBFS(raiz) {
 
 // ─── Vista Árbol ───────────────────────────────────────────────────────────
 
-function NodoReferido({ nodo, nivel = 0 }) {
+function NodoReferido({ nodo, nivel = 0, onNodoClick }) {
     const [expandido, setExpandido] = useState(nivel < 2);
     const tieneHijos = nodo.referidos && nodo.referidos.length > 0;
 
@@ -107,12 +107,24 @@ function NodoReferido({ nodo, nivel = 0 }) {
                         {nodo.referidos.length}
                     </span>
                 )}
+
+                {/* Botón para navegar (enfocar esta red) */}
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onNodoClick?.(nodo);
+                    }}
+                    className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-herbalife-green transition-colors flex-shrink-0"
+                    title={`Ver red de ${nodo.nombreCompleto}`}
+                >
+                    <Network className="w-4 h-4" />
+                </button>
             </div>
 
             {expandido && tieneHijos && (
                 <div>
                     {nodo.referidos.map(hijo => (
-                        <NodoReferido key={hijo.membresiaId} nodo={hijo} nivel={nivel + 1} />
+                        <NodoReferido key={hijo.membresiaId} nodo={hijo} nivel={nivel + 1} onNodoClick={onNodoClick} />
                     ))}
                 </div>
             )}
@@ -249,10 +261,14 @@ export default function ArbolReferidosModal({ membresiaId, nombreSocio, onClose 
     const [tab, setTab] = useState("arbol");
     const [raizId, setRaizId] = useState(membresiaId);
     const [raizNombre, setRaizNombre] = useState(nombreSocio);
+    const [historial, setHistorial] = useState([]);
 
     useEffect(() => {
-        setRaizId(membresiaId);
-        setRaizNombre(nombreSocio);
+        if (membresiaId) {
+            setHistorial([{ id: membresiaId, nombre: nombreSocio }]);
+            setRaizId(membresiaId);
+            setRaizNombre(nombreSocio);
+        }
     }, [membresiaId, nombreSocio]);
 
     useEffect(() => {
@@ -282,21 +298,30 @@ export default function ArbolReferidosModal({ membresiaId, nombreSocio, onClose 
         }
     };
 
-    const handleNodoClick = useCallback((nodeDatum) => {
-        const id = nodeDatum?.attributes?.membresiaId;
-        const name = nodeDatum?.name;
+    const handleNodoClick = useCallback((node) => {
+        const id = node?.attributes?.membresiaId || node?.membresiaId;
+        const nombre = node?.name || node?.nombreCompleto;
         if (id && id !== raizId) {
+            setHistorial(prev => {
+                const index = prev.findIndex(h => h.id === id);
+                if (index !== -1) {
+                    return prev.slice(0, index + 1);
+                }
+                return [...prev, { id, nombre }];
+            });
             setRaizId(id);
-            setRaizNombre(name);
+            setRaizNombre(nombre);
         }
     }, [raizId]);
 
-    const handleVolverRaiz = () => {
-        setRaizId(membresiaId);
-        setRaizNombre(nombreSocio);
+    const handleBreadcrumbClick = (index) => {
+        const entry = historial[index];
+        if (entry) {
+            setHistorial(prev => prev.slice(0, index + 1));
+            setRaizId(entry.id);
+            setRaizNombre(entry.nombre);
+        }
     };
-
-    const esNavegando = raizId !== membresiaId;
 
     const totalRed = arbol ? contarNodos(arbol) - 1 : 0;
     const listaPlana = useMemo(() => arbol ? aplanarArbolBFS(arbol) : [], [arbol]);
@@ -313,22 +338,33 @@ export default function ArbolReferidosModal({ membresiaId, nombreSocio, onClose 
                         </div>
                         <div>
                             <h3 className="text-lg font-semibold text-gray-800">Red de Referidos</h3>
-                            <p className="text-sm text-gray-500">
-                                <span className="font-medium text-gray-700">{raizNombre}</span>
-                                {esNavegando && (
-                                    <button
-                                        onClick={handleVolverRaiz}
-                                        className="ml-2 px-2 py-0.5 text-xs bg-herbalife-green/10 text-herbalife-green rounded-full font-medium hover:bg-herbalife-green/20 transition-colors"
-                                    >
-                                        ← Volver a {nombreSocio}
-                                    </button>
-                                )}
+                            <div className="flex flex-wrap items-center gap-1 text-xs text-gray-500 mt-0.5">
+                                {historial.map((entry, index) => {
+                                    const esUltimo = index === historial.length - 1;
+                                    return (
+                                        <React.Fragment key={entry.id}>
+                                            {index > 0 && <span className="text-gray-400">/</span>}
+                                            {esUltimo ? (
+                                                <span className="font-semibold text-gray-800 truncate max-w-[150px]">
+                                                    {entry.nombre}
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleBreadcrumbClick(index)}
+                                                    className="hover:text-herbalife-green hover:underline truncate max-w-[150px] font-medium transition-colors"
+                                                >
+                                                    {entry.nombre}
+                                                </button>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })}
                                 {!loading && arbol && (
-                                    <span className="ml-2 px-2 py-0.5 bg-herbalife-green/10 text-herbalife-green rounded-full text-xs font-medium">
+                                    <span className="ml-2 px-2 py-0.5 bg-herbalife-green/10 text-herbalife-green rounded-full text-[10px] font-semibold">
                                         {totalRed} persona{totalRed !== 1 ? "s" : ""} en red
                                     </span>
                                 )}
-                            </p>
+                            </div>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -391,7 +427,7 @@ export default function ArbolReferidosModal({ membresiaId, nombreSocio, onClose 
                         <VistaArbolD3 arbol={arbol} onNodoClick={handleNodoClick} />
                     )}
                     {!loading && !error && arbol && tab === "jerarquia" && (
-                        <NodoReferido nodo={arbol} nivel={0} />
+                        <NodoReferido nodo={arbol} nivel={0} onNodoClick={handleNodoClick} />
                     )}
                     {!loading && !error && arbol && tab === "lista" && (
                         <VistaLista listaPlana={listaPlana} totalRed={totalRed} />

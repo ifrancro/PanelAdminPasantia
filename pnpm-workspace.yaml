@@ -1,0 +1,9 @@
+overrides:
+  vite: npm:rolldown-vite@7.2.5
+
+onlyBuiltDependencies:
+  - esbuild
+  - core-js
+
+allowBuilds:
+  core-js: true
