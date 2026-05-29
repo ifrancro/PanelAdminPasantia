@@ -82,7 +82,7 @@ export default function LoginPage() {
                     icon: "error",
                     title: "Acceso denegado",
                     text: "Este panel es exclusivo para administradores",
-                    confirmButtonColor: "#7CB342",
+                    confirmButtonColor: "#1B5E20",
                 });
                 setLoading(false);
                 return;
@@ -94,7 +94,7 @@ export default function LoginPage() {
                 icon: "success",
                 title: "¡Bienvenido!",
                 text: `Hola ${userData.nombre || "Administrador"}`,
-                confirmButtonColor: "#7CB342",
+                confirmButtonColor: "#1B5E20",
                 timer: 1500,
                 showConfirmButton: false,
             });
@@ -151,7 +151,7 @@ export default function LoginPage() {
                 icon: "error",
                 title: errorTitle,
                 text: errorMessage,
-                confirmButtonColor: "#7CB342",
+                confirmButtonColor: "#1B5E20",
             });
         } finally {
             setLoading(false);
@@ -159,12 +159,12 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-herbalife-green to-herbalife-dark p-4">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-herbalife-light to-herbalife-green p-4">
             {/* Card de Login */}
             <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 transform transition-all duration-300 hover:scale-[1.02]">
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <div className="w-20 h-20 bg-gradient-to-br from-herbalife-green to-herbalife-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <div className="w-20 h-20 bg-gradient-to-br from-herbalife-light to-herbalife-green rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                         <LogIn className="w-10 h-10 text-white" />
                     </div>
                     <h1 className="text-3xl font-bold text-gray-800">Bienvenido</h1>
@@ -221,7 +221,7 @@ export default function LoginPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-4 bg-gradient-to-r from-herbalife-green to-herbalife-dark text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full py-4 bg-gradient-to-r from-herbalife-light to-herbalife-green text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading ? (
                             <div className="flex items-center justify-center gap-2">

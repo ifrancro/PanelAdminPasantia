@@ -37,7 +37,7 @@ api.interceptors.response.use(
                 icon: "warning",
                 title: "Sesión expirada",
                 text: "Por favor inicia sesión nuevamente",
-                confirmButtonColor: "#7CB342",
+                confirmButtonColor: "#1B5E20",
             }).then(() => {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");

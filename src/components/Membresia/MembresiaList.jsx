@@ -82,7 +82,7 @@ export default function MembresiaList() {
             `,
             showCancelButton: true,
             confirmButtonText: "Actualizar",
-            confirmButtonColor: "#7CB342",
+            confirmButtonColor: "#1B5E20",
             preConfirm: () => {
                 const puntos = document.getElementById("swal-input-puntos").value;
                 if (!puntos || puntos < 0) {
@@ -122,7 +122,7 @@ export default function MembresiaList() {
             `,
             showCancelButton: true,
             confirmButtonText: "Cambiar",
-            confirmButtonColor: "#7CB342",
+            confirmButtonColor: "#1B5E20",
             preConfirm: () => {
                 return document.getElementById("swal-select-nivel").value;
             },

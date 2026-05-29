@@ -111,7 +111,7 @@ export default function Sidebar() {
             {/* Logo */}
             <div className="px-6 py-5 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-herbalife-green to-herbalife-dark rounded-xl flex items-center justify-center">
+                    <div className="w-10 h-10 bg-gradient-to-br from-herbalife-light to-herbalife-green rounded-xl flex items-center justify-center">
                         <span className="text-white font-bold text-lg">H</span>
                     </div>
                     <div>

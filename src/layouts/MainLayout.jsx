@@ -37,7 +37,7 @@ export default function MainLayout() {
                                     {user?.rol?.nombre || "Administrador"}
                                 </p>
                             </div>
-                            <div className="w-10 h-10 bg-gradient-to-br from-herbalife-green to-herbalife-dark rounded-full flex items-center justify-center text-white font-semibold">
+                            <div className="w-10 h-10 bg-gradient-to-br from-herbalife-light to-herbalife-green rounded-full flex items-center justify-center text-white font-semibold">
                                 {user?.nombre?.charAt(0) || "A"}
                             </div>
                         </div>
