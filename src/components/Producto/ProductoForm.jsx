@@ -7,7 +7,7 @@
  */
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Save, Package } from "lucide-react";
+import { ArrowLeft, Save, Package, CloudUpload } from "lucide-react";
 import Swal from "sweetalert2";
 import { getProductoById, createProducto, updateProducto, subirImagenProducto } from "../../services/ProductoService";
 import { useAuth } from "../../context/AuthContext";
@@ -202,205 +202,199 @@ export default function ProductoForm() {
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-md overflow-hidden max-w-2xl mx-auto">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden max-w-4xl mx-auto p-8 mb-8">
             {/* Header */}
-            <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => navigate("/productos")}
-                        className="p-2 hover:bg-gray-100 rounded-lg"
-                    >
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
-                    </button>
-                    <div>
-                        <h2 className="text-xl font-semibold text-gray-800">
-                            {isEdit ? "Editar Producto/Combo" : "Nuevo Producto/Combo"}
-                        </h2>
-                        <p className="text-sm text-gray-500">{userRole === "ANFITRION" ? "Menú local de mi Club" : "Catálogo global"}</p>
-                    </div>
-                </div>
+            <div className="mb-8">
+                <button
+                    onClick={() => navigate("/productos")}
+                    className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 mb-4 transition-colors"
+                >
+                    <ArrowLeft className="w-5 h-5 text-gray-600" />
+                </button>
+                <h2 className="text-2xl font-bold text-gray-800">
+                    {isEdit ? "Editar Producto/Combo" : "Nuevo Producto/Combo"}
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                    {userRole === "ANFITRION" ? "Menú local de mi Club" : "Catálogo global"}
+                </p>
             </div>
 
             {/* Formulario */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                {/* Imagen del Producto */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Imagen del Producto
-                    </label>
-                    <div className="flex items-center gap-4">
-                        <div className="w-24 h-24 border border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden relative">
-                            {formData.imagenUrl ? (
-                                <img src={formData.imagenUrl} alt="Vista previa" className="w-full h-full object-cover" />
-                            ) : (
-                                <Package className="w-8 h-8 text-gray-400" />
-                            )}
-                            {uploadingImage && (
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <form onSubmit={handleSubmit} className="space-y-8">
+                
+                {/* Zona de Carga de Imagen */}
+                <div className="relative">
+                    <div className={`w-full border-2 border-dashed ${uploadingImage ? 'border-herbalife-green bg-herbalife-green/5' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'} rounded-xl p-8 flex flex-col items-center justify-center transition-colors cursor-pointer overflow-hidden min-h-[160px]`}>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            disabled={uploadingImage}
+                        />
+                        {formData.imagenUrl ? (
+                            <div className="absolute inset-0 w-full h-full p-2">
+                                <img src={formData.imagenUrl} alt="Vista previa" className="w-full h-full object-contain bg-white rounded-lg" />
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded-xl">
+                                    <p className="text-white font-medium flex items-center gap-2">
+                                        <CloudUpload className="w-5 h-5" />
+                                        Clic para cambiar imagen
+                                    </p>
                                 </div>
-                            )}
+                            </div>
+                        ) : (
+                            <>
+                                {uploadingImage ? (
+                                    <div className="w-8 h-8 border-4 border-herbalife-green border-t-transparent rounded-full animate-spin mb-3"></div>
+                                ) : (
+                                    <CloudUpload className="w-10 h-10 text-gray-400 mb-3" />
+                                )}
+                                <p className="text-sm font-medium text-gray-700 mb-1 text-center">
+                                    Arrastra y suelta una imagen aquí, o haz clic para seleccionar
+                                </p>
+                                <p className="text-xs text-gray-500 text-center">
+                                    Soporta PNG, JPG. Máximo 5MB.
+                                </p>
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                {/* Información Básica */}
+                <div>
+                    <h3 className="text-base font-bold text-gray-800 mb-4">Información Básica</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-2">Nombre del Producto *</label>
+                            <input
+                                type="text"
+                                name="nombre"
+                                value={formData.nombre}
+                                onChange={handleChange}
+                                placeholder="Ej: Batido Nutricional, Té Herbal"
+                                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none transition-all ${errors.nombre ? 'border-red-500' : 'border-green-600/30'}`}
+                            />
+                            {errors.nombre && <p className="text-red-500 text-xs mt-1">{errors.nombre}</p>}
                         </div>
                         <div>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                                className="hidden"
-                                id="image-upload-input"
-                                disabled={uploadingImage}
+                            <label className="block text-xs font-bold text-gray-700 mb-2">Descripción</label>
+                            <textarea
+                                name="descripcion"
+                                value={formData.descripcion}
+                                onChange={handleChange}
+                                rows="3"
+                                maxLength="500"
+                                placeholder="Descripción del producto..."
+                                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none resize-none transition-all ${errors.descripcion ? 'border-red-500' : 'border-green-600/30'}`}
                             />
-                            <label
-                                htmlFor="image-upload-input"
-                                className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 cursor-pointer inline-block"
-                            >
-                                {uploadingImage ? "Subiendo..." : "Subir Imagen"}
-                            </label>
-                            <p className="text-xs text-gray-500 mt-1">Soporta PNG, JPG. Máximo 5MB.</p>
+                            {errors.descripcion && <p className="text-red-500 text-xs mt-1">{errors.descripcion}</p>}
+                            <p className="text-gray-400 text-xs text-right mt-1">{formData.descripcion.length}/500 caracteres</p>
                         </div>
                     </div>
                 </div>
 
+                {/* Precio y Valor */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Nombre del Producto *
-                    </label>
-                    <input
-                        type="text"
-                        name="nombre"
-                        value={formData.nombre}
-                        onChange={handleChange}
-                        placeholder="Ej: Batido Nutricional, Té Herbal"
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.nombre ? 'border-red-500' : 'border-gray-300'}`}
-                    />
-                    {errors.nombre && (
-                        <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
-                    )}
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Descripción
-                    </label>
-                    <textarea
-                        name="descripcion"
-                        value={formData.descripcion}
-                        onChange={handleChange}
-                        rows="3"
-                        maxLength="500"
-                        placeholder="Descripción del producto..."
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none resize-none ${errors.descripcion ? 'border-red-500' : 'border-gray-300'}`}
-                    />
-                    {errors.descripcion && (
-                        <p className="text-red-500 text-sm mt-1">{errors.descripcion}</p>
-                    )}
-                    <p className="text-gray-500 text-xs mt-1">{formData.descripcion.length}/500 caracteres</p>
-                </div>
-
-                {/* Precio */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Precio ($)
-                    </label>
-                    <input
-                        type="number"
-                        step="0.01"
-                        name="precio"
-                        value={formData.precio}
-                        onChange={handleChange}
-                        min="0"
-                        placeholder="Ej: 15.50"
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.precio ? 'border-red-500' : 'border-gray-300'}`}
-                    />
-                    {errors.precio && (
-                        <p className="text-red-500 text-sm mt-1">{errors.precio}</p>
-                    )}
-                </div>
-
-                {/* Puntos Valor */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Puntos Valor
-                    </label>
-                    <input
-                        type="number"
-                        name="puntosValor"
-                        value={formData.puntosValor}
-                        onChange={handleChange}
-                        min="0"
-                        placeholder="Ej: 50"
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.puntosValor ? 'border-red-500' : 'border-gray-300'}`}
-                    />
-                    {errors.puntosValor && (
-                        <p className="text-red-500 text-sm mt-1">{errors.puntosValor}</p>
-                    )}
-                </div>
-
-                {/* Ingredientes (privado) */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Ingredientes
-                        <span className="ml-2 text-xs text-gray-400">(privado, visible solo admin/anfitrión)</span>
-                    </label>
-                    <textarea
-                        name="ingredientes"
-                        value={formData.ingredientes}
-                        onChange={handleChange}
-                        rows="3"
-                        placeholder="Lista de ingredientes..."
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none resize-none"
-                    />
-                </div>
-
-                {/* Switch de Combo */}
-                <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                    <div>
-                        <label className="text-sm font-medium text-gray-700 font-semibold">¿Es un Combo?</label>
-                        <p className="text-xs text-gray-500">Activa esta opción si este producto es un paquete o combo</p>
+                    <h3 className="text-base font-bold text-gray-800 mb-4">Precio y Valor</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-2">Precio ($)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                name="precio"
+                                value={formData.precio}
+                                onChange={handleChange}
+                                min="0"
+                                placeholder="Ej: 15.50"
+                                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none transition-all ${errors.precio ? 'border-red-500' : 'border-green-600/30'}`}
+                            />
+                            {errors.precio && <p className="text-red-500 text-xs mt-1">{errors.precio}</p>}
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-2">Puntos Valor</label>
+                            <input
+                                type="number"
+                                name="puntosValor"
+                                value={formData.puntosValor}
+                                onChange={handleChange}
+                                min="0"
+                                placeholder="Ej: 50"
+                                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none transition-all ${errors.puntosValor ? 'border-red-500' : 'border-green-600/30'}`}
+                            />
+                            {errors.puntosValor && <p className="text-red-500 text-xs mt-1">{errors.puntosValor}</p>}
+                        </div>
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, esCombo: !prev.esCombo }))}
-                        className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-300 ${formData.esCombo ? 'bg-herbalife-green' : 'bg-gray-300'}`}
-                    >
-                        <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${formData.esCombo ? 'translate-x-5' : ''}`} />
-                    </button>
                 </div>
 
-                {/* Hub selector removido - hubId hardcodeado a 1 */}
+                {/* Detalles del Producto */}
+                <div>
+                    <h3 className="text-base font-bold text-gray-800 mb-4">Detalles del Producto</h3>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-2">
+                            Ingredientes <span className="font-normal text-gray-500">(privado, visible solo admin/anfitrión)</span>
+                        </label>
+                        <textarea
+                            name="ingredientes"
+                            value={formData.ingredientes}
+                            onChange={handleChange}
+                            rows="3"
+                            placeholder="Lista de ingredientes..."
+                            className="w-full px-4 py-2.5 border border-green-600/30 rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none resize-none transition-all"
+                        />
+                    </div>
+                </div>
+
+                {/* Configuración de Combo */}
+                <div>
+                    <h3 className="text-base font-bold text-gray-800 mb-4">Configuración de Combo</h3>
+                    <div className="flex items-center gap-4">
+                        <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, esCombo: !prev.esCombo }))}
+                            className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-300 ${formData.esCombo ? 'bg-herbalife-green' : 'bg-gray-300'} flex-shrink-0`}
+                        >
+                            <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${formData.esCombo ? 'translate-x-5' : ''}`} />
+                        </button>
+                        <div>
+                            <p className="text-sm font-bold text-gray-800">¿Es un Combo?</p>
+                            <p className="text-xs text-gray-500">Activa esta opción si este producto es un paquete o combo</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Notificaciones */}
                 {userRole === "ANFITRION" ? (
-                    <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                        <p className="text-sm text-purple-800">
-                            🛈 <strong>Información:</strong> Este producto/combo se creará en tu club y estará en estado <strong>PENDIENTE</strong> de aprobación por parte del administrador antes de ser visible para los socios.
+                    <div className="p-4 bg-blue-50/70 border border-blue-100 rounded-lg flex items-start gap-3 mt-4">
+                        <div className="w-5 h-5 rounded-full border border-blue-400 flex items-center justify-center text-blue-500 text-xs font-bold mt-0.5 flex-shrink-0">i</div>
+                        <p className="text-sm text-blue-800">
+                            <strong>Nota:</strong> Este producto/combo se creará en tu club y estará en estado <strong>PENDIENTE</strong> de aprobación por parte del administrador.
                         </p>
                     </div>
                 ) : (
-                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="p-4 bg-blue-50/70 border border-blue-100 rounded-lg flex items-start gap-3 mt-4">
+                        <div className="w-5 h-5 rounded-full border border-blue-400 flex items-center justify-center text-blue-500 text-xs font-bold mt-0.5 flex-shrink-0">i</div>
                         <p className="text-sm text-blue-800">
-                            🛈 <strong>Nota:</strong> Los productos se crean automáticamente en el Hub ID=1.
+                            <strong>Nota:</strong> Los productos se crean automáticamente en el Hub ID=1.
                         </p>
                     </div>
                 )}
 
                 {/* Botones */}
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="flex justify-end gap-3 pt-6">
                     <button
                         type="button"
                         onClick={() => navigate("/productos")}
-                        className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                        className="px-6 py-2 border border-gray-200 text-gray-700 font-bold text-sm rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
                     >
                         Cancelar
                     </button>
                     <button
                         type="submit"
                         disabled={loading}
-                        className="flex items-center gap-2 px-6 py-3 bg-herbalife-green text-white rounded-lg hover:bg-herbalife-dark disabled:opacity-50"
+                        className="px-6 py-2 bg-[#1b5e20] text-white font-bold text-sm rounded-lg hover:bg-[#144918] disabled:opacity-50 transition-colors shadow-sm flex items-center gap-2"
                     >
-                        {loading ? (
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        ) : (
-                            <Save className="w-4 h-4" />
-                        )}
+                        {loading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
                         {isEdit ? "Actualizar" : "Guardar"}
                     </button>
                 </div>
