@@ -21,7 +21,9 @@ import { useAuth } from "../context/AuthContext";
  * Navegación lateral del panel administrativo
  */
 export default function Sidebar() {
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
+    
+    const userRole = user?.rol?.nombre?.toUpperCase();
 
     /**
      * 📑 menuSections
@@ -106,6 +108,25 @@ export default function Sidebar() {
         },
     ];
 
+    // Filtrar secciones según el rol del usuario (ANFITRION solo ve dashboard, clubes, productos y asistencias)
+    const filteredSections = menuSections.map(section => {
+        const links = section.links.filter(link => {
+            if (userRole === "ANFITRION") {
+                const allowedPaths = ["/", "/clubes", "/productos", "/asistencias"];
+                return allowedPaths.includes(link.to);
+            }
+            return true; // Admin ve todo
+        }).map(link => {
+            // Renombrar Clubes a "Mis Clubes" para anfitriones
+            if (userRole === "ANFITRION" && link.to === "/clubes") {
+                return { ...link, label: "Mis Clubes" };
+            }
+            return link;
+        });
+
+        return { ...section, links };
+    }).filter(section => section.links.length > 0);
+
     return (
         <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
             {/* Logo */}
@@ -116,14 +137,16 @@ export default function Sidebar() {
                     </div>
                     <div>
                         <h1 className="text-lg font-bold text-gray-800">NutriClub</h1>
-                        <p className="text-xs text-gray-500">Panel Admin</p>
+                        <p className="text-xs text-gray-500">
+                            {userRole === "ANFITRION" ? "Panel Anfitrión" : "Panel Admin"}
+                        </p>
                     </div>
                 </div>
             </div>
 
             {/* Navegación */}
             <nav className="flex-1 overflow-y-auto p-4 space-y-6">
-                {menuSections.map((section, sectionIndex) => (
+                {filteredSections.map((section, sectionIndex) => (
                     <div key={sectionIndex}>
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">
                             {section.title}

@@ -7,11 +7,15 @@
  */
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Package } from "lucide-react";
 import Swal from "sweetalert2";
-import { getProductoById, createProducto, updateProducto } from "../../services/ProductoService";
+import { getProductoById, createProducto, updateProducto, subirImagenProducto } from "../../services/ProductoService";
+import { useAuth } from "../../context/AuthContext";
 
 export default function ProductoForm() {
+    const { user } = useAuth();
+    const userRole = user?.rol?.nombre?.toUpperCase();
+
     const { id } = useParams();
     const navigate = useNavigate();
     const isEdit = Boolean(id);
@@ -19,8 +23,11 @@ export default function ProductoForm() {
     const [formData, setFormData] = useState({
         nombre: "",
         descripcion: "",
+        precio: "",
         puntosValor: "",
         ingredientes: "",
+        esCombo: false,
+        imagenUrl: "",
     });
 
     // ⚠️ HARDCODED: Hub ID = 1
@@ -31,6 +38,7 @@ export default function ProductoForm() {
     const [errors, setErrors] = useState({
         nombre: "",
         descripcion: "",
+        precio: "",
         puntosValor: "",
     });
 
@@ -42,11 +50,15 @@ export default function ProductoForm() {
     const fetchProducto = async () => {
         try {
             const response = await getProductoById(id);
+            const data = response.data;
             setFormData({
-                nombre: response.data.nombre || "",
-                descripcion: response.data.descripcion || "",
-                puntosValor: response.data.puntosValor ?? "",
-                ingredientes: response.data.ingredientes || "",
+                nombre: data.nombre || "",
+                descripcion: data.descripcion || "",
+                precio: data.precio ?? "",
+                puntosValor: data.puntosValor ?? "",
+                ingredientes: data.ingredientes || "",
+                esCombo: data.esCombo ?? false,
+                imagenUrl: data.imagenUrl || "",
             });
         } catch (error) {
             Swal.fire("Error", "No se pudo cargar el producto", "error");
@@ -56,12 +68,37 @@ export default function ProductoForm() {
         }
     };
 
+    const [uploadingImage, setUploadingImage] = useState(false);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
         // Limpiar error al escribir
         if (errors[name]) {
             setErrors((prev) => ({ ...prev, [name]: "" }));
+        }
+    };
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploadingImage(true);
+        try {
+            const response = await subirImagenProducto(file);
+            const uploadedUrl = response.data.imagenUrl;
+            setFormData(prev => ({ ...prev, imagenUrl: uploadedUrl }));
+            Swal.fire({
+                icon: "success",
+                title: "Imagen cargada",
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } catch (error) {
+            console.error("Error al subir imagen:", error);
+            Swal.fire("Error", "No se pudo subir la imagen", "error");
+        } finally {
+            setUploadingImage(false);
         }
     };
 
@@ -92,6 +129,14 @@ export default function ProductoForm() {
             errorsCopy.descripcion = "";
         }
 
+        // Precio - debe ser número positivo o decimal si se ingresa
+        if (formData.precio !== "" && (isNaN(Number(formData.precio)) || Number(formData.precio) < 0)) {
+            errorsCopy.precio = "Debe ser un número positivo";
+            valid = false;
+        } else {
+            errorsCopy.precio = "";
+        }
+
         // Puntos Valor - debe ser número entero positivo si se ingresa
         if (formData.puntosValor !== "" && (isNaN(Number(formData.puntosValor)) || Number(formData.puntosValor) < 0)) {
             errorsCopy.puntosValor = "Debe ser un número entero positivo";
@@ -119,8 +164,11 @@ export default function ProductoForm() {
             const payload = {
                 nombre: formData.nombre.trim(),
                 descripcion: formData.descripcion.trim() || null,
+                precio: formData.precio !== "" ? Number(formData.precio) : null,
                 puntosValor: formData.puntosValor !== "" ? Number(formData.puntosValor) : null,
                 ingredientes: formData.ingredientes.trim() || null,
+                esCombo: formData.esCombo,
+                imagenUrl: formData.imagenUrl || null,
             };
 
             if (isEdit) {
@@ -128,7 +176,13 @@ export default function ProductoForm() {
                 Swal.fire("Actualizado", "Producto actualizado", "success");
             } else {
                 await createProducto(payload, hubId);
-                Swal.fire("Creado", "Producto creado en el Hub", "success");
+                Swal.fire(
+                    "Creado",
+                    userRole === "ANFITRION"
+                        ? "Producto/combo enviado para aprobación del administrador"
+                        : "Producto creado en el Hub",
+                    "success"
+                );
             }
             navigate("/productos");
         } catch (error) {
@@ -160,15 +214,53 @@ export default function ProductoForm() {
                     </button>
                     <div>
                         <h2 className="text-xl font-semibold text-gray-800">
-                            {isEdit ? "Editar Producto" : "Nuevo Producto"}
+                            {isEdit ? "Editar Producto/Combo" : "Nuevo Producto/Combo"}
                         </h2>
-                        <p className="text-sm text-gray-500">Catálogo global</p>
+                        <p className="text-sm text-gray-500">{userRole === "ANFITRION" ? "Menú local de mi Club" : "Catálogo global"}</p>
                     </div>
                 </div>
             </div>
 
             {/* Formulario */}
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                {/* Imagen del Producto */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Imagen del Producto
+                    </label>
+                    <div className="flex items-center gap-4">
+                        <div className="w-24 h-24 border border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden relative">
+                            {formData.imagenUrl ? (
+                                <img src={formData.imagenUrl} alt="Vista previa" className="w-full h-full object-cover" />
+                            ) : (
+                                <Package className="w-8 h-8 text-gray-400" />
+                            )}
+                            {uploadingImage && (
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            )}
+                        </div>
+                        <div>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                className="hidden"
+                                id="image-upload-input"
+                                disabled={uploadingImage}
+                            />
+                            <label
+                                htmlFor="image-upload-input"
+                                className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 cursor-pointer inline-block"
+                            >
+                                {uploadingImage ? "Subiendo..." : "Subir Imagen"}
+                            </label>
+                            <p className="text-xs text-gray-500 mt-1">Soporta PNG, JPG. Máximo 5MB.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Nombre del Producto *
@@ -203,6 +295,26 @@ export default function ProductoForm() {
                         <p className="text-red-500 text-sm mt-1">{errors.descripcion}</p>
                     )}
                     <p className="text-gray-500 text-xs mt-1">{formData.descripcion.length}/500 caracteres</p>
+                </div>
+
+                {/* Precio */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Precio ($)
+                    </label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        name="precio"
+                        value={formData.precio}
+                        onChange={handleChange}
+                        min="0"
+                        placeholder="Ej: 15.50"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-herbalife-green focus:border-herbalife-green outline-none ${errors.precio ? 'border-red-500' : 'border-gray-300'}`}
+                    />
+                    {errors.precio && (
+                        <p className="text-red-500 text-sm mt-1">{errors.precio}</p>
+                    )}
                 </div>
 
                 {/* Puntos Valor */}
@@ -240,13 +352,35 @@ export default function ProductoForm() {
                     />
                 </div>
 
-                {/* Hub selector removido - hubId hardcodeado a 1 */}
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-800">
-                        🛈 <strong>Nota:</strong> Los productos se crean automáticamente en el Hub ID=1.
-                        {/* TODO: Agregar selector de Hub cuando se implemente gestión de hubs */}
-                    </p>
+                {/* Switch de Combo */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 font-semibold">¿Es un Combo?</label>
+                        <p className="text-xs text-gray-500">Activa esta opción si este producto es un paquete o combo</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, esCombo: !prev.esCombo }))}
+                        className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-300 ${formData.esCombo ? 'bg-herbalife-green' : 'bg-gray-300'}`}
+                    >
+                        <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${formData.esCombo ? 'translate-x-5' : ''}`} />
+                    </button>
                 </div>
+
+                {/* Hub selector removido - hubId hardcodeado a 1 */}
+                {userRole === "ANFITRION" ? (
+                    <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                        <p className="text-sm text-purple-800">
+                            🛈 <strong>Información:</strong> Este producto/combo se creará en tu club y estará en estado <strong>PENDIENTE</strong> de aprobación por parte del administrador antes de ser visible para los socios.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                            🛈 <strong>Nota:</strong> Los productos se crean automáticamente en el Hub ID=1.
+                        </p>
+                    </div>
+                )}
 
                 {/* Botones */}
                 <div className="flex justify-end gap-3 pt-4">

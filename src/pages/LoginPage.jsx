@@ -72,16 +72,16 @@ export default function LoginPage() {
             const userResponse = await api.get("/auth/me");
             const userData = userResponse.data;
 
-            // 🔒 Validar que el usuario sea ADMIN
+            // 🔒 Validar que el usuario sea ADMIN o ANFITRION
             const userRole = userData.rol?.nombre?.toUpperCase();
-            if (userRole !== "ADMIN") {
-                // Limpiar token si no es admin
+            if (userRole !== "ADMIN" && userRole !== "ANFITRION") {
+                // Limpiar token si no es autorizado
                 delete api.defaults.headers.common["Authorization"];
 
                 Swal.fire({
                     icon: "error",
                     title: "Acceso denegado",
-                    text: "Este panel es exclusivo para administradores",
+                    text: "Este panel es exclusivo para administradores y anfitriones",
                     confirmButtonColor: "#1B5E20",
                 });
                 setLoading(false);

@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation, Navigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { useAuth } from "../context/AuthContext";
 
@@ -9,6 +9,19 @@ import { useAuth } from "../context/AuthContext";
  */
 export default function MainLayout() {
     const { user } = useAuth();
+    const location = useLocation();
+
+    const userRole = user?.rol?.nombre?.toUpperCase();
+
+    // Guard de rutas para el rol ANFITRION: solo tiene acceso a Dashboard (/), Clubes (/clubes), Productos (/productos) y Asistencias (/asistencias)
+    if (userRole === "ANFITRION") {
+        const allowedPaths = ["", "clubes", "productos", "asistencias"];
+        const currentRootPath = location.pathname.split("/")[1]; // ej: /productos/create -> "productos"
+        
+        if (!allowedPaths.includes(currentRootPath)) {
+            return <Navigate to="/" replace />;
+        }
+    }
 
     return (
         <div className="flex h-screen bg-gray-100">

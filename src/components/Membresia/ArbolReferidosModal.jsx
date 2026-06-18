@@ -5,7 +5,7 @@
  *   - Vista Lista: tabla plana (BFS) con filtro numérico de líneas
  */
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { X, Users, ChevronDown, ChevronRight, Star, List, GitFork, Filter, Network } from "lucide-react";
+import { X, Users, ChevronDown, ChevronRight, Star, List, GitFork, Filter, Network, Search } from "lucide-react";
 import { getArbolReferidos } from "../../services/MembresiaService";
 import VistaArbolD3 from "./VistaArbolD3";
 
@@ -262,6 +262,7 @@ export default function ArbolReferidosModal({ membresiaId, nombreSocio, onClose 
     const [raizId, setRaizId] = useState(membresiaId);
     const [raizNombre, setRaizNombre] = useState(nombreSocio);
     const [historial, setHistorial] = useState([]);
+    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
         if (membresiaId) {
@@ -331,13 +332,13 @@ export default function ArbolReferidosModal({ membresiaId, nombreSocio, onClose 
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
 
                 {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border-b border-gray-200 gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-herbalife-green/10 rounded-lg">
+                        <div className="p-2 bg-herbalife-green/10 rounded-lg shadow-sm">
                             <Users className="w-5 h-5 text-herbalife-green" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-800">Red de Referidos</h3>
+                            <h3 className="text-lg font-bold text-gray-800">Red de Referidos</h3>
                             <div className="flex flex-wrap items-center gap-1 text-xs text-gray-500 mt-0.5">
                                 {historial.map((entry, index) => {
                                     const esUltimo = index === historial.length - 1;
@@ -360,16 +361,32 @@ export default function ArbolReferidosModal({ membresiaId, nombreSocio, onClose 
                                     );
                                 })}
                                 {!loading && arbol && (
-                                    <span className="ml-2 px-2 py-0.5 bg-herbalife-green/10 text-herbalife-green rounded-full text-[10px] font-semibold">
+                                    <span className="ml-2 px-2.5 py-0.5 bg-herbalife-green/10 text-herbalife-green rounded-full text-[10px] font-bold shadow-sm">
                                         {totalRed} persona{totalRed !== 1 ? "s" : ""} en red
                                     </span>
                                 )}
                             </div>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-                        <X className="w-5 h-5 text-gray-500" />
-                    </button>
+                    
+                    <div className="flex items-center gap-3">
+                        {/* Buscador */}
+                        {!loading && !error && arbol && (
+                            <div className="relative group w-full sm:w-auto">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-herbalife-green transition-colors" />
+                                <input
+                                    type="search"
+                                    placeholder="Buscar socio..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-herbalife-green/30 focus:border-herbalife-green focus:bg-white transition-all shadow-sm"
+                                />
+                            </div>
+                        )}
+                        <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                            <X className="w-5 h-5 text-gray-500" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Tabs (solo si hay datos) */}
@@ -424,7 +441,7 @@ export default function ArbolReferidosModal({ membresiaId, nombreSocio, onClose 
                         <div className="text-center py-8 text-red-500 text-sm">{error}</div>
                     )}
                     {!loading && !error && arbol && tab === "arbol" && (
-                        <VistaArbolD3 arbol={arbol} onNodoClick={handleNodoClick} />
+                        <VistaArbolD3 arbol={arbol} onNodoClick={handleNodoClick} searchTerm={searchTerm} />
                     )}
                     {!loading && !error && arbol && tab === "jerarquia" && (
                         <NodoReferido nodo={arbol} nivel={0} onNodoClick={handleNodoClick} />
