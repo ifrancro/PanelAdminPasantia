@@ -73,7 +73,7 @@ export default function ClubDetail() {
             text: "El solicitante se convertirá en anfitrión.",
             icon: "question",
             showCancelButton: true,
-            confirmButtonColor: "#7CB342",
+            confirmButtonColor: "#1B5E20",
             confirmButtonText: "Sí, aprobar",
         });
         if (result.isConfirmed) {

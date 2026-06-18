@@ -12,8 +12,10 @@ import {
     desactivarProducto,
     cambiarEstadoAprobacionProducto,
     getProductosPendientes,
+    toggleDisponibilidadProducto,
 } from "../../services/ProductoService";
 import { getAllClubes } from "../../services/ClubService";
+import { useAuth } from "../../context/AuthContext";
 
 // ─── Constantes ─────────────────────────────────────────────────────────────
 
@@ -26,9 +28,13 @@ const APROBACION_BADGE = {
 // ─── Componente principal ───────────────────────────────────────────────────
 
 export default function ProductoList() {
+    const { user } = useAuth();
+    const userRole = user?.rol?.nombre?.toUpperCase();
+
     const [productos, setProductos] = useState([]);
     const [pendientes, setPendientes] = useState([]);
     const [clubes, setClubes] = useState([]);
+    const [miClub, setMiClub] = useState(null);
     const [clubFiltro, setClubFiltro] = useState(""); // "" = todos
     const [loading, setLoading] = useState(true);
     const [loadingPendientes, setLoadingPendientes] = useState(false);
@@ -37,10 +43,38 @@ export default function ProductoList() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetchProductos();
-        fetchPendientes();
-        getAllClubes().then(r => setClubes(r.data || [])).catch(() => {});
-    }, []);
+        const init = async () => {
+            try {
+                setLoading(true);
+                const clubsRes = await getAllClubes();
+                const clubsList = clubsRes.data || [];
+                setClubes(clubsList);
+
+                if (userRole === "ANFITRION") {
+                    const foundClub = clubsList.find(c => c.anfitrionId === user?.id);
+                    if (foundClub) {
+                        setMiClub(foundClub);
+                        setClubFiltro(foundClub.id);
+                        const response = await getAllProductos(foundClub.id);
+                        setProductos(response.data);
+                    } else {
+                        const response = await getAllProductos(null);
+                        setProductos(response.data);
+                    }
+                } else {
+                    const response = await getAllProductos(null);
+                    setProductos(response.data);
+                    fetchPendientes();
+                }
+            } catch (error) {
+                console.error("Error al inicializar productos:", error);
+                Swal.fire("Error", "No se pudieron cargar los datos", "error");
+            } finally {
+                setLoading(false);
+            }
+        };
+        init();
+    }, [user, userRole]);
 
     const fetchProductos = async (clubId = "") => {
         try {
@@ -58,6 +92,37 @@ export default function ProductoList() {
         const val = e.target.value;
         setClubFiltro(val);
         fetchProductos(val);
+    };
+
+    const handleToggleDisponibilidad = async (productoId) => {
+        const targetClubId = clubFiltro || (miClub ? miClub.id : null);
+        if (!targetClubId) {
+            Swal.fire("Aviso", "No se detectó un club asociado para cambiar la disponibilidad", "warning");
+            return;
+        }
+        try {
+            const response = await toggleDisponibilidadProducto(targetClubId, productoId);
+            const updated = response.data;
+            
+            // Actualizar localmente el estado del producto
+            setProductos(prev => prev.map(p => {
+                if (p.id === productoId) {
+                    return { ...p, disponible: updated.disponible };
+                }
+                return p;
+            }));
+            
+            Swal.fire({
+                icon: "success",
+                title: updated.disponible ? "Habilitado en menú" : "Deshabilitado de menú",
+                text: `"${updated.nombre}" ha sido ${updated.disponible ? 'habilitado' : 'deshabilitado'} en tu club.`,
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } catch (error) {
+            console.error("Error al cambiar disponibilidad:", error);
+            Swal.fire("Error", "No se pudo cambiar la disponibilidad del producto", "error");
+        }
     };
 
     const fetchPendientes = async () => {
@@ -179,76 +244,103 @@ export default function ProductoList() {
             </div>
 
             {/* ── Tabs ── */}
-            <div className="flex border-b border-gray-200 px-6">
-                <button
-                    onClick={() => setTab("todos")}
-                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors
-                        ${tab === "todos"
-                            ? "border-herbalife-green text-herbalife-green"
-                            : "border-transparent text-gray-500 hover:text-gray-700"}`}
-                >
-                    <Package className="w-4 h-4" />
-                    Todos los Productos
-                    <span className="px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded text-xs">{productos.length}</span>
-                </button>
-                <button
-                    onClick={() => setTab("pendientes")}
-                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors
-                        ${tab === "pendientes"
-                            ? "border-yellow-500 text-yellow-600"
-                            : "border-transparent text-gray-500 hover:text-gray-700"}`}
-                >
-                    <Clock className="w-4 h-4" />
-                    Solicitudes Pendientes
-                    {pendientes.length > 0 && (
-                        <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">
-                            {pendientes.length}
-                        </span>
-                    )}
-                </button>
-            </div>
+            {userRole !== "ANFITRION" && (
+                <div className="flex border-b border-gray-200 px-6">
+                    <button
+                        onClick={() => setTab("todos")}
+                        className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors
+                            ${tab === "todos"
+                                ? "border-herbalife-green text-herbalife-green"
+                                : "border-transparent text-gray-500 hover:text-gray-700"}`}
+                    >
+                        <Package className="w-4 h-4" />
+                        Todos los Productos
+                        <span className="px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded text-xs">{productos.length}</span>
+                    </button>
+                    <button
+                        onClick={() => setTab("pendientes")}
+                        className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors
+                            ${tab === "pendientes"
+                                ? "border-yellow-500 text-yellow-600"
+                                : "border-transparent text-gray-500 hover:text-gray-700"}`}
+                    >
+                        <Clock className="w-4 h-4" />
+                        Solicitudes Pendientes
+                        {pendientes.length > 0 && (
+                            <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">
+                                {pendientes.length}
+                            </span>
+                        )}
+                    </button>
+                </div>
+            )}
 
             {/* ══ TAB: TODOS ══ */}
             {tab === "todos" && (
                 <div className="overflow-x-auto">
-                    {/* Filtro por club */}
-                    <div className="flex items-center gap-3 px-6 py-3 border-b border-gray-100 bg-gray-50/50">
-                        <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Filtrar por menú de club:</span>
-                        <select
-                            value={clubFiltro}
-                            onChange={handleClubChange}
-                            className="px-3 py-1.5 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green outline-none"
-                        >
-                            <option value="">Todos los productos</option>
-                            {clubes.map(c => (
-                                <option key={c.id} value={c.id}>{c.nombreClub}</option>
-                            ))}
-                        </select>
-                        {clubFiltro && (
-                            <button
-                                onClick={() => handleClubChange({ target: { value: "" } })}
-                                className="text-xs text-gray-400 hover:text-gray-600 underline"
+                    {/* Filtro por club / Mi club banner */}
+                    {userRole === "ANFITRION" ? (
+                        <div className="flex items-center gap-3 px-6 py-3 border-b border-gray-100 bg-gray-50/50">
+                            <Building2 className="w-4 h-4 text-herbalife-green flex-shrink-0" />
+                            <span className="text-sm font-semibold text-gray-700">Mi Club:</span>
+                            <span className="px-3 py-1 bg-herbalife-green/10 text-herbalife-green rounded-full text-xs font-semibold">
+                                {miClub?.nombreClub || "Cargando..."}
+                            </span>
+                            <span className="text-xs text-gray-500 italic ml-2">
+                                Gestiona la disponibilidad en tu menú. Los combos/productos locales creados por ti requieren aprobación del administrador.
+                            </span>
+                            <span className="ml-auto text-xs text-gray-400">{productos.length} producto(s)</span>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-3 px-6 py-3 border-b border-gray-100 bg-gray-50/50">
+                            <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <span className="text-sm text-gray-600">Filtrar por menú de club:</span>
+                            <select
+                                value={clubFiltro}
+                                onChange={handleClubChange}
+                                className="px-3 py-1.5 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-herbalife-green outline-none"
                             >
-                                Limpiar
-                            </button>
-                        )}
-                        <span className="ml-auto text-xs text-gray-400">{productos.length} resultado{productos.length !== 1 ? "s" : ""}</span>
-                    </div>
+                                <option value="">Todos los productos</option>
+                                {clubes.map(c => (
+                                    <option key={c.id} value={c.id}>{c.nombreClub}</option>
+                                ))}
+                            </select>
+                            {clubFiltro && (
+                                <button
+                                    onClick={() => handleClubChange({ target: { value: "" } })}
+                                    className="text-xs text-gray-400 hover:text-gray-600 underline"
+                                >
+                                    Limpiar
+                                </button>
+                            )}
+                            <span className="ml-auto text-xs text-gray-400">{productos.length} resultado{productos.length !== 1 ? "s" : ""}</span>
+                        </div>
+                    )}
                     <table className="w-full">
                         <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hub</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aprobación</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
-                            </tr>
+                            {userRole === "ANFITRION" ? (
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Precio</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Origen</th>
+                                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">En menú de mi Club</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aprobación</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                                </tr>
+                            ) : (
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hub</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aprobación</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                                </tr>
+                            )}
                         </thead>
                         <tbody className="divide-y divide-gray-200">
                             {productos.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                                    <td colSpan={userRole === "ANFITRION" ? "6" : "5"} className="px-6 py-8 text-center text-gray-500">
                                         No hay productos registrados
                                     </td>
                                 </tr>
@@ -256,15 +348,30 @@ export default function ProductoList() {
                                 productos.map((producto) => {
                                     const esPendiente = producto.estadoAprobacion === "PENDIENTE";
                                     const aprobacion = APROBACION_BADGE[producto.estadoAprobacion] || { cls: "bg-gray-100 text-gray-600 border-gray-300", label: producto.estadoAprobacion || "N/A" };
+                                    const esAnfitrion = userRole === "ANFITRION";
+                                    const esGlobal = producto.tipo === "GLOBAL";
+
                                     return (
                                         <tr key={producto.id} className={`hover:bg-gray-50 ${esPendiente ? "bg-yellow-50/40" : ""}`}>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg flex items-center justify-center">
-                                                        <Package className="w-5 h-5 text-orange-600" />
-                                                    </div>
+                                                    {producto.imagenUrl ? (
+                                                        <img src={producto.imagenUrl} alt={producto.nombre}
+                                                            className="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0" />
+                                                    ) : (
+                                                        <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                            <Package className="w-5 h-5 text-orange-600" />
+                                                        </div>
+                                                    )}
                                                     <div>
-                                                        <p className="font-medium text-gray-800">{producto.nombre}</p>
+                                                        <p className="font-medium text-gray-800 flex items-center gap-2">
+                                                            {producto.nombre}
+                                                            {producto.esCombo && (
+                                                                <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-orange-100 text-orange-700 border border-orange-200 rounded-full flex items-center gap-0.5 flex-shrink-0 font-semibold shadow-sm">
+                                                                    🍹 Combo
+                                                                </span>
+                                                            )}
+                                                        </p>
                                                         <p className="text-sm text-gray-500 max-w-xs truncate">
                                                             {producto.clubCreadorNombre
                                                                 ? <span className="text-purple-600 font-medium">{producto.clubCreadorNombre}</span>
@@ -273,68 +380,125 @@ export default function ProductoList() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <p className="text-sm font-medium text-gray-800">{producto.hubNombre || "-"}</p>
-                                                <p className="text-xs text-gray-500">Hub asociado</p>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoBadge(producto.activo)}`}>
-                                                    {producto.activo ? "ACTIVO" : "INACTIVO"}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-semibold border ${aprobacion.cls}`}>
-                                                    {aprobacion.label}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex justify-end gap-1">
-                                                    {esPendiente && (
-                                                        <>
+                                            {esAnfitrion ? (
+                                                <>
+                                                    <td className="px-6 py-4">
+                                                        <span className="text-sm font-semibold text-gray-800">
+                                                            ${producto.precio != null ? Number(producto.precio).toFixed(2) : "0.00"}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-2.5 py-1 text-xs font-bold rounded-full border ${esGlobal ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-purple-50 text-purple-700 border-purple-200"}`}>
+                                                            {producto.tipo || "LOCAL"}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        <div className="flex justify-center">
                                                             <button
-                                                                onClick={() => handleAprobacion(producto, "APROBADO")}
-                                                                disabled={loadingAprobacion[producto.id]}
-                                                                title="Aprobar"
-                                                                className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg disabled:opacity-40"
+                                                                type="button"
+                                                                onClick={() => handleToggleDisponibilidad(producto.id)}
+                                                                className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-300 ${producto.disponible ? 'bg-herbalife-green' : 'bg-gray-300'}`}
+                                                                title={producto.disponible ? "Deshabilitar en mi menú" : "Habilitar en mi menú"}
                                                             >
-                                                                <CheckCircle className="w-4 h-4" />
+                                                                <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${producto.disponible ? 'translate-x-5' : ''}`} />
                                                             </button>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {esGlobal ? (
+                                                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold border bg-green-50 text-green-700 border-green-200">
+                                                                Aprobado
+                                                            </span>
+                                                        ) : (
+                                                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${aprobacion.cls}`}>
+                                                                {aprobacion.label}
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex justify-end gap-1">
+                                                            {!esGlobal ? (
+                                                                <button
+                                                                    onClick={() => navigate(`/productos/edit/${producto.id}`)}
+                                                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                                    title="Editar"
+                                                                >
+                                                                    <Pencil className="w-4 h-4" />
+                                                                </button>
+                                                            ) : (
+                                                                <span className="text-xs text-gray-400 italic" title="Los productos globales solo los edita el Administrador">
+                                                                    Global
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-sm font-medium text-gray-800">{producto.hubNombre || "-"}</p>
+                                                        <p className="text-xs text-gray-500">Hub asociado</p>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoBadge(producto.activo)}`}>
+                                                            {producto.activo ? "ACTIVO" : "INACTIVO"}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold border ${aprobacion.cls}`}>
+                                                            {aprobacion.label}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex justify-end gap-1">
+                                                            {esPendiente && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => handleAprobacion(producto, "APROBADO")}
+                                                                        disabled={loadingAprobacion[producto.id]}
+                                                                        title="Aprobar"
+                                                                        className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg disabled:opacity-40"
+                                                                    >
+                                                                        <CheckCircle className="w-4 h-4" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleAprobacion(producto, "RECHAZADO")}
+                                                                        disabled={loadingAprobacion[producto.id]}
+                                                                        title="Rechazar"
+                                                                        className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-40"
+                                                                    >
+                                                                        <XCircle className="w-4 h-4" />
+                                                                    </button>
+                                                                </>
+                                                            )}
                                                             <button
-                                                                onClick={() => handleAprobacion(producto, "RECHAZADO")}
-                                                                disabled={loadingAprobacion[producto.id]}
-                                                                title="Rechazar"
-                                                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-40"
+                                                                onClick={() => navigate(`/productos/edit/${producto.id}`)}
+                                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                                                                title="Editar"
                                                             >
-                                                                <XCircle className="w-4 h-4" />
+                                                                <Pencil className="w-4 h-4" />
                                                             </button>
-                                                        </>
-                                                    )}
-                                                    <button
-                                                        onClick={() => navigate(`/productos/edit/${producto.id}`)}
-                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                                                        title="Editar"
-                                                    >
-                                                        <Pencil className="w-4 h-4" />
-                                                    </button>
-                                                    {producto.activo ? (
-                                                        <button
-                                                            onClick={() => handleDesactivar(producto.id, producto.nombre)}
-                                                            className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg"
-                                                            title="Desactivar"
-                                                        >
-                                                            <PowerOff className="w-4 h-4" />
-                                                        </button>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => handleActivar(producto.id)}
-                                                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
-                                                            title="Activar"
-                                                        >
-                                                            <Power className="w-4 h-4" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
+                                                            {producto.activo ? (
+                                                                <button
+                                                                    onClick={() => handleDesactivar(producto.id, producto.nombre)}
+                                                                    className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg"
+                                                                    title="Desactivar"
+                                                                >
+                                                                    <PowerOff className="w-4 h-4" />
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => handleActivar(producto.id)}
+                                                                    className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
+                                                                    title="Activar"
+                                                                >
+                                                                    <Power className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </>
+                                            )}
                                         </tr>
                                     );
                                 })

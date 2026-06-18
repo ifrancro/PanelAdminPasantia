@@ -53,7 +53,7 @@ export default function ReportsPage() {
                 icon: 'success',
                 title: '¡Reporte descargado!',
                 text: 'El PDF se generó correctamente.',
-                confirmButtonColor: '#7CB342',
+                confirmButtonColor: '#1B5E20',
                 timer: 2500,
                 showConfirmButton: false,
             });
@@ -62,7 +62,7 @@ export default function ReportsPage() {
                 icon: 'error',
                 title: 'Error al generar PDF',
                 text: error.message || 'Intenta de nuevo.',
-                confirmButtonColor: '#7CB342',
+                confirmButtonColor: '#1B5E20',
             });
         } finally {
             setLoading(prev => ({ ...prev, [tipo]: false }));

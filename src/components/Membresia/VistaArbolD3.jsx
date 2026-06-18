@@ -1,12 +1,20 @@
 /**
- * 🌳 VistaArbolD3.jsx
- * Visualización genealógica del árbol de referidos usando react-d3-tree.
- * Renderiza nodos SVG personalizados (tarjeta con avatar, N° socio, puntos, estado)
- * con conectores curvos tipo Bézier y controles de zoom / orientación.
+ * 🌳 VistaArbolD3.jsx (Ahora usando React Flow)
+ * Visualización genealógica del árbol de referidos.
+ * Renderiza nodos personalizados arrastrables de forma independiente.
  */
-import React, { useRef, useState, useEffect, useMemo, useCallback } from "react";
-import Tree from "react-d3-tree";
-import { Maximize2, RotateCw, Star } from "lucide-react";
+import React, { useEffect, useMemo } from "react";
+import {
+    ReactFlow,
+    MiniMap,
+    Controls,
+    Background,
+    useNodesState,
+    useEdgesState,
+    Handle,
+    Position,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 
 const ESTADO_BADGE = {
     ACTIVA: "bg-green-100 text-green-700",
@@ -22,210 +30,216 @@ const NIVEL_BORDER = [
     "border-teal-400",
 ];
 
-const NODE_W = 230;
-const NODE_H = 112;
-
-function toD3TreeData(nodo, nivel = 0) {
-    if (!nodo) return null;
-    return {
-        name: nodo.nombreCompleto || "—",
-        attributes: {
-            numeroSocio: nodo.numeroSocio || "",
-            puntosAcumulados: nodo.puntosAcumulados ?? 0,
-            estado: nodo.estado || "",
-            membresiaId: nodo.membresiaId,
-            clubNombre: nodo.clubNombre || "",
-            nivel,
-        },
-        children: (nodo.referidos || []).map((h) => toD3TreeData(h, nivel + 1)),
-    };
+// ─── Lógica para armar la red de React Flow ────────────────────────────────
+function buildFlowData(nodo, rootX = 0, rootY = 0, searchTerm = "") {
+    const nodes = [];
+    const edges = [];
+    
+    const nSearch = searchTerm.toLowerCase().trim();
+    
+    // 1er paso: pre-calcular coincidencias y anchos de los subárboles para posicionamiento inicial
+    function preProcess(n, lvl) {
+        if (!n) return null;
+        
+        const nombreStr = (n.nombreCompleto || "").toLowerCase();
+        const socioStr = (n.numeroSocio || "").toLowerCase();
+        n._isMatch = nSearch ? (nombreStr.includes(nSearch) || socioStr.includes(nSearch)) : true;
+        
+        n._children = (n.referidos || []).map(c => preProcess(c, lvl + 1));
+        n._hasMatchingChild = n._children.some(c => c._isMatch || c._hasMatchingChild);
+        
+        if (n._children.length === 0) {
+            n._width = 280; // Espacio horizontal mínimo por hoja
+        } else {
+            n._width = n._children.reduce((acc, c) => acc + c._width, 0);
+        }
+        return n;
+    }
+    
+    const root = preProcess(nodo, 0);
+    
+    // 2do paso: construir nodos y ejes de React Flow con las posiciones
+    function positionNodes(n, x, y, lvl) {
+        if (!n) return;
+        
+        nodes.push({
+            id: String(n.membresiaId),
+            position: { x, y },
+            type: "custom",
+            data: {
+                name: n.nombreCompleto,
+                numeroSocio: n.numeroSocio,
+                puntosAcumulados: n.puntosAcumulados ?? 0,
+                estado: n.estado,
+                clubNombre: n.clubNombre,
+                membresiaId: n.membresiaId,
+                nivel: lvl,
+                isMatch: n._isMatch,
+                hasMatchingChild: n._hasMatchingChild,
+                searchTermActive: !!nSearch
+            }
+        });
+        
+        if (n._children && n._children.length > 0) {
+            let startX = x - (n._width / 2);
+            n._children.forEach(c => {
+                const childX = startX + (c._width / 2);
+                edges.push({
+                    id: `e-${n.membresiaId}-${c.membresiaId}`,
+                    source: String(n.membresiaId),
+                    target: String(c.membresiaId),
+                    type: "smoothstep",
+                    animated: false,
+                    style: { stroke: "#94a3b8", strokeWidth: 1.5 }
+                });
+                positionNodes(c, childX, y + 160, lvl + 1); // Separación vertical de 160px
+                startX += c._width;
+            });
+        }
+    }
+    
+    if (root) {
+        positionNodes(root, rootX, rootY, 0);
+    }
+    
+    return { initialNodes: nodes, initialEdges: edges };
 }
 
-function CustomNode({ nodeDatum, toggleNode, onSelect }) {
-    const nivel = nodeDatum.attributes?.nivel ?? 0;
-    const estado = nodeDatum.attributes?.estado || "";
+// ─── Componente Nodo Personalizado ─────────────────────────────────────────
+const CustomNode = ({ data }) => {
+    const { 
+        name, numeroSocio, clubNombre, puntosAcumulados, 
+        estado, nivel, isMatch, hasMatchingChild, searchTermActive 
+    } = data;
+    
     const esRaiz = nivel === 0;
-    const tieneHijos = nodeDatum.children && nodeDatum.children.length > 0;
-    const colapsado = nodeDatum.__rd3t?.collapsed;
     const borderClass = esRaiz
         ? "border-herbalife-green"
         : NIVEL_BORDER[(nivel - 1) % NIVEL_BORDER.length];
 
+    let containerClass = `w-[240px] bg-white rounded-xl shadow-md border-2 p-3 flex flex-col justify-center cursor-grab active:cursor-grabbing transition-all duration-300 relative overflow-hidden`;
+    
+    if (searchTermActive) {
+        if (isMatch) {
+            containerClass += ` ${borderClass} ring-4 ring-herbalife-green/30 shadow-xl scale-105`;
+        } else if (hasMatchingChild) {
+            containerClass += ` ${borderClass} opacity-60 hover:opacity-80 grayscale-[30%]`;
+        } else {
+            containerClass += ` border-gray-200 opacity-30 grayscale hover:opacity-50`;
+        }
+    } else {
+        containerClass += ` ${borderClass} hover:shadow-xl hover:scale-[1.02]`;
+    }
+
     return (
-        <foreignObject
-            x={-NODE_W / 2}
-            y={-NODE_H / 2}
-            width={NODE_W}
-            height={NODE_H}
-            style={{ overflow: "visible" }}
-        >
-            <div
-                xmlns="http://www.w3.org/1999/xhtml"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onSelect?.(nodeDatum);
-                }}
-                onDoubleClick={(e) => {
-                    e.stopPropagation();
-                    if (tieneHijos) toggleNode();
-                }}
-                className={`w-full h-full bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-150 border-2 ${borderClass} p-2.5 flex flex-col justify-center cursor-pointer hover:scale-[1.02]`}
-                title={`${nodeDatum.name} · ${nodeDatum.attributes?.numeroSocio}`}
-            >
-                <div className="flex items-center gap-2">
-                    <div
-                        className={`w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-sm ${
-                            esRaiz
-                                ? "bg-herbalife-green text-white"
-                                : "bg-herbalife-green/15 text-herbalife-green"
-                        }`}
-                    >
-                        {nodeDatum.name?.charAt(0) || "?"}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate leading-tight">
-                            {nodeDatum.name}
-                        </p>
-                        <p className="text-[11px] text-gray-500 font-mono truncate">
-                            {nodeDatum.attributes?.numeroSocio}
-                        </p>
-                        {nodeDatum.attributes?.clubNombre && (
-                            <p className="text-[10px] text-gray-400 truncate leading-tight">
-                                {nodeDatum.attributes.clubNombre}
-                            </p>
-                        )}
-                    </div>
+        <div className={containerClass}>
+            {/* Handle oculto arriba para que los conectores se unan al borde */}
+            <Handle type="target" position={Position.Top} className="opacity-0 w-full h-1 top-0" />
+            
+            {/* Etiqueta de Jerarquía */}
+            <div className="absolute top-0 right-0 bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-bl-lg border-l border-b border-gray-200">
+                Nivel {nivel}
+            </div>
+
+            <div className="flex items-center gap-2 mt-1">
+                <div
+                    className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-sm ${
+                        esRaiz
+                            ? "bg-herbalife-green text-white"
+                            : "bg-herbalife-green/15 text-herbalife-green"
+                    }`}
+                >
+                    {name?.charAt(0) || "?"}
                 </div>
-                <div className="flex items-center justify-between mt-1.5 gap-1">
-                    <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${
-                            ESTADO_BADGE[estado] || "bg-gray-100 text-gray-600"
-                        }`}
-                    >
-                        {estado}
-                    </span>
-                    <span className="flex items-center gap-1 text-[11px] text-yellow-600 font-semibold">
-                        <svg
-                            className="w-3 h-3 fill-current"
-                            viewBox="0 0 20 20"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.953a1 1 0 00.95.69h4.152c.969 0 1.371 1.24.588 1.81l-3.36 2.44a1 1 0 00-.364 1.118l1.287 3.953c.3.922-.755 1.688-1.54 1.118l-3.36-2.44a1 1 0 00-1.175 0l-3.36 2.44c-.785.57-1.84-.196-1.54-1.118l1.287-3.953a1 1 0 00-.364-1.118L2.072 9.38c-.783-.57-.38-1.81.588-1.81h4.152a1 1 0 00.95-.69l1.287-3.953z" />
-                        </svg>
-                        {nodeDatum.attributes?.puntosAcumulados}
-                    </span>
-                    {tieneHijos && (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                toggleNode();
-                            }}
-                            className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-[10px] font-bold min-w-[26px]"
-                            title={colapsado ? "Expandir" : "Colapsar"}
-                        >
-                            {colapsado ? `+${nodeDatum.children.length}` : "−"}
-                        </button>
+                <div className="flex-1 min-w-0 pr-8">
+                    <p className="text-sm font-semibold text-gray-800 truncate leading-tight">
+                        {name || "—"}
+                    </p>
+                    <p className="text-[11px] text-gray-500 font-mono truncate">
+                        {numeroSocio || "-"}
+                    </p>
+                    {clubNombre && (
+                        <p className="text-[10px] text-gray-400 truncate leading-tight mt-0.5">
+                            {clubNombre}
+                        </p>
                     )}
                 </div>
             </div>
-        </foreignObject>
+            
+            <div className="flex items-center justify-between mt-3 gap-1">
+                <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${
+                        ESTADO_BADGE[estado] || "bg-gray-100 text-gray-600"
+                    }`}
+                >
+                    {estado || "-"}
+                </span>
+                <span className="flex items-center gap-1 text-xs text-yellow-600 font-semibold">
+                    <svg
+                        className="w-3.5 h-3.5 fill-current"
+                        viewBox="0 0 20 20"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.953a1 1 0 00.95.69h4.152c.969 0 1.371 1.24.588 1.81l-3.36 2.44a1 1 0 00-.364 1.118l1.287 3.953c.3.922-.755 1.688-1.54 1.118l-3.36-2.44a1 1 0 00-1.175 0l-3.36 2.44c-.785.57-1.84-.196-1.54-1.118l1.287-3.953a1 1 0 00-.364-1.118L2.072 9.38c-.783-.57-.38-1.81.588-1.81h4.152a1 1 0 00.95-.69l1.287-3.953z" />
+                    </svg>
+                    {puntosAcumulados}
+                </span>
+            </div>
+            
+            {/* Handle oculto abajo */}
+            <Handle type="source" position={Position.Bottom} className="opacity-0 w-full h-1 bottom-0" />
+        </div>
     );
-}
+};
 
-export default function VistaArbolD3({ arbol, onNodoClick }) {
-    const containerRef = useRef(null);
-    const [translate, setTranslate] = useState({ x: 0, y: 0 });
-    const [orientation, setOrientation] = useState("vertical");
-    const [fitTick, setFitTick] = useState(0);
+const nodeTypes = { custom: CustomNode };
 
-    const data = useMemo(() => toD3TreeData(arbol), [arbol]);
+// ─── Componente Principal ──────────────────────────────────────────────────
+export default function VistaArbolD3({ arbol, searchTerm = "" }) {
+    const [nodes, setNodes, onNodesChange] = useNodesState([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-    const centrar = useCallback(() => {
-        if (!containerRef.current) return;
-        const rect = containerRef.current.getBoundingClientRect();
-        if (orientation === "vertical") {
-            setTranslate({ x: rect.width / 2, y: NODE_H });
-        } else {
-            setTranslate({ x: NODE_W / 2 + 40, y: rect.height / 2 });
+    useEffect(() => {
+        if (arbol) {
+            // Posicionamos la raíz cerca del centro superior
+            const { initialNodes, initialEdges } = buildFlowData(arbol, 0, 50, searchTerm);
+            setNodes(initialNodes);
+            setEdges(initialEdges);
         }
-    }, [orientation]);
-
-    useEffect(() => {
-        centrar();
-    }, [centrar, fitTick]);
-
-    useEffect(() => {
-        const handler = () => centrar();
-        window.addEventListener("resize", handler);
-        return () => window.removeEventListener("resize", handler);
-    }, [centrar]);
-
-    if (!arbol) return null;
+    }, [arbol, searchTerm, setNodes, setEdges]);
 
     return (
-        <div className="relative w-full h-[65vh] bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl border border-gray-200 overflow-hidden">
-            <div className="absolute top-3 right-3 z-10 flex gap-2">
-                <button
-                    onClick={() =>
-                        setOrientation((o) => (o === "vertical" ? "horizontal" : "vertical"))
-                    }
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-50 shadow-sm"
-                    title="Cambiar orientación"
-                >
-                    <RotateCw className="w-3.5 h-3.5" />
-                    {orientation === "vertical" ? "Horizontal" : "Vertical"}
-                </button>
-                <button
-                    onClick={() => setFitTick((t) => t + 1)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-50 shadow-sm"
-                    title="Centrar árbol"
-                >
-                    <Maximize2 className="w-3.5 h-3.5" />
-                    Centrar
-                </button>
+        <div className="relative w-full h-[65vh] bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl border border-gray-200 overflow-hidden shadow-inner">
+            
+            <div className="absolute top-3 left-3 z-10 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg px-3 py-2 text-[11px] text-gray-600 shadow-sm pointer-events-none">
+                <p className="font-bold text-gray-800 mb-1">Mapa Interactivo Independiente</p>
+                <p>• <b>Arrastrar cuadros:</b> Los moverá de forma independiente.</p>
+                <p>• <b>Arrastrar fondo:</b> Moverá todo el lienzo.</p>
+                <p>• <b>Scroll:</b> Para hacer zoom In/Out.</p>
             </div>
 
-            <div className="absolute bottom-3 left-3 z-10 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg px-3 py-2 text-[11px] text-gray-600 shadow-sm">
-                <p className="font-semibold text-gray-700 mb-1">Controles</p>
-                <p>• Scroll: zoom · Arrastrar: mover</p>
-                <p>• Doble click en nodo: expandir/colapsar</p>
-            </div>
-
-            <div ref={containerRef} className="w-full h-full">
-                {data && (
-                    <Tree
-                        data={data}
-                        translate={translate}
-                        orientation={orientation}
-                        pathFunc="diagonal"
-                        nodeSize={
-                            orientation === "vertical"
-                                ? { x: NODE_W + 30, y: NODE_H + 70 }
-                                : { x: NODE_W + 90, y: NODE_H + 25 }
-                        }
-                        separation={{ siblings: 1, nonSiblings: 1.25 }}
-                        zoom={0.85}
-                        scaleExtent={{ min: 0.2, max: 2 }}
-                        initialDepth={2}
-                        renderCustomNodeElement={(rd3tProps) => (
-                            <CustomNode {...rd3tProps} onSelect={onNodoClick} />
-                        )}
-                        pathClassFunc={() => "rd3t-link-herbalife"}
-                    />
-                )}
-            </div>
-
-            <style>{`
-                .rd3t-link-herbalife {
-                    stroke: #94a3b8;
-                    stroke-width: 1.5;
-                    fill: none;
-                }
-                .rd3t-tree-container {
-                    width: 100%;
-                    height: 100%;
-                }
-            `}</style>
+            <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                nodeTypes={nodeTypes}
+                fitView
+                fitViewOptions={{ padding: 0.3 }}
+                minZoom={0.1}
+                maxZoom={1.5}
+                attributionPosition="bottom-right"
+            >
+                <Background color="#ccc" gap={16} size={1} />
+                <Controls showInteractive={false} />
+                <MiniMap 
+                    nodeColor={(n) => {
+                        return n.data.nivel === 0 ? '#1B5E20' : '#E2E8F0';
+                    }} 
+                    maskColor="rgba(240, 240, 240, 0.6)"
+                    className="rounded-lg overflow-hidden border border-gray-200 shadow-sm"
+                />
+            </ReactFlow>
         </div>
     );
 }

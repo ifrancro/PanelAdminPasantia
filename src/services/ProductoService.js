@@ -78,3 +78,25 @@ export const getProductosRechazados = (clubId = null) => {
     const params = clubId ? { clubId } : {};
     return api.get(`${API_URL}/rechazados`, { params });
 };
+
+/**
+ * Sube una imagen de producto
+ * @param {File} file - El archivo de imagen
+ */
+export const subirImagenProducto = (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post(`${API_URL}/subir-imagen`, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
+};
+
+/**
+ * Toggle de disponibilidad de un producto en un club
+ * @param {number} clubId
+ * @param {number} productoId
+ */
+export const toggleDisponibilidadProducto = (clubId, productoId) =>
+    api.patch(`/clubes/${clubId}/productos/${productoId}/toggle`);

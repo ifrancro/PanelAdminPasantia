@@ -72,17 +72,17 @@ export default function LoginPage() {
             const userResponse = await api.get("/auth/me");
             const userData = userResponse.data;
 
-            // 🔒 Validar que el usuario sea ADMIN
+            // 🔒 Validar que el usuario sea ADMIN o ANFITRION
             const userRole = userData.rol?.nombre?.toUpperCase();
-            if (userRole !== "ADMIN") {
-                // Limpiar token si no es admin
+            if (userRole !== "ADMIN" && userRole !== "ANFITRION") {
+                // Limpiar token si no es autorizado
                 delete api.defaults.headers.common["Authorization"];
 
                 Swal.fire({
                     icon: "error",
                     title: "Acceso denegado",
-                    text: "Este panel es exclusivo para administradores",
-                    confirmButtonColor: "#7CB342",
+                    text: "Este panel es exclusivo para administradores y anfitriones",
+                    confirmButtonColor: "#1B5E20",
                 });
                 setLoading(false);
                 return;
@@ -94,7 +94,7 @@ export default function LoginPage() {
                 icon: "success",
                 title: "¡Bienvenido!",
                 text: `Hola ${userData.nombre || "Administrador"}`,
-                confirmButtonColor: "#7CB342",
+                confirmButtonColor: "#1B5E20",
                 timer: 1500,
                 showConfirmButton: false,
             });
@@ -151,7 +151,7 @@ export default function LoginPage() {
                 icon: "error",
                 title: errorTitle,
                 text: errorMessage,
-                confirmButtonColor: "#7CB342",
+                confirmButtonColor: "#1B5E20",
             });
         } finally {
             setLoading(false);
@@ -159,61 +159,69 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-herbalife-green to-herbalife-dark p-4">
+        <div 
+            className="min-h-screen flex items-center justify-center p-4 relative"
+            style={{
+                backgroundImage: `url('https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=2070&auto=format&fit=crop')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+            }}
+        >
+            {/* Overlay sutil para oscurecer la imagen y que resalte la tarjeta */}
+            <div className="absolute inset-0 bg-black/20"></div>
+
+            {/* Header NutriClub */}
+            <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-center bg-white/30 backdrop-blur-md border-b border-white/20">
+                <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">NutriClub</h1>
+            </div>
+
             {/* Card de Login */}
-            <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 transform transition-all duration-300 hover:scale-[1.02]">
+            <div className="relative z-10 w-full max-w-[560px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-12 md:p-16 transform transition-all duration-300">
                 {/* Header */}
-                <div className="text-center mb-8">
-                    <div className="w-20 h-20 bg-gradient-to-br from-herbalife-green to-herbalife-dark rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <LogIn className="w-10 h-10 text-white" />
-                    </div>
-                    <h1 className="text-3xl font-bold text-gray-800">Bienvenido</h1>
-                    <p className="text-gray-500 mt-2">Inicia sesión en tu cuenta</p>
+                <div className="text-center mb-12">
+                    <h2 className="text-4xl font-bold text-gray-800 mb-4">Bienvenido de nuevo</h2>
+                    <p className="text-lg text-gray-500 font-medium">Inicia sesión en tu panel de administración.</p>
                 </div>
 
                 {/* Formulario */}
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Campo Email */}
                     <div>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Mail className="h-5 w-5 text-gray-400" />
-                            </div>
-                            <input
-                                type="email"
-                                placeholder="Correo Electrónico"
-                                value={email}
-                                onChange={(e) => {
-                                    setEmail(e.target.value);
-                                    if (errors.email) setErrors(prev => ({ ...prev, email: "" }));
-                                }}
-                                className={`w-full pl-12 pr-4 py-4 border-2 rounded-xl focus:border-herbalife-green focus:ring-2 focus:ring-herbalife-green/20 outline-none transition-all duration-200 text-gray-700 ${errors.email ? 'border-red-500' : 'border-gray-200'}`}
-                            />
-                        </div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">
+                            Correo Electrónico
+                        </label>
+                        <input
+                            type="email"
+                            placeholder="tucorreo@ejemplo.com"
+                            value={email}
+                            onChange={(e) => {
+                                setEmail(e.target.value);
+                                if (errors.email) setErrors(prev => ({ ...prev, email: "" }));
+                            }}
+                            className={`w-full px-6 py-4 border rounded-xl focus:border-[#2e7d32] focus:ring-1 focus:ring-[#2e7d32] outline-none transition-all duration-200 text-gray-700 text-lg ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+                        />
                         {errors.email && (
-                            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                            <p className="text-red-500 text-sm mt-2 font-medium">{errors.email}</p>
                         )}
                     </div>
 
                     {/* Campo Contraseña */}
-                    <div>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Lock className="h-5 w-5 text-gray-400" />
-                            </div>
-                            <input
-                                type="password"
-                                placeholder="Contraseña"
-                                value={password}
-                                onChange={(e) => {
-                                    setPassword(e.target.value);
-                                    if (errors.password) setErrors(prev => ({ ...prev, password: "" }));
-                                }}
-                                className={`w-full pl-12 pr-4 py-4 border-2 rounded-xl focus:border-herbalife-green focus:ring-2 focus:ring-herbalife-green/20 outline-none transition-all duration-200 text-gray-700 ${errors.password ? 'border-red-500' : 'border-gray-200'}`}
-                            />
-                        </div>
+                    <div className="pt-4">
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">
+                            Contraseña
+                        </label>
+                        <input
+                            type="password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => {
+                                setPassword(e.target.value);
+                                if (errors.password) setErrors(prev => ({ ...prev, password: "" }));
+                            }}
+                            className={`w-full px-6 py-4 border rounded-xl focus:border-[#2e7d32] focus:ring-1 focus:ring-[#2e7d32] outline-none transition-all duration-200 text-gray-700 text-lg tracking-widest ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+                        />
                         {errors.password && (
-                            <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                            <p className="text-red-500 text-sm mt-2 font-medium">{errors.password}</p>
                         )}
                     </div>
 
@@ -221,25 +229,18 @@ export default function LoginPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-4 bg-gradient-to-r from-herbalife-green to-herbalife-dark text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full py-4 mt-8 bg-[#2e7d32] hover:bg-[#1b5e20] text-white text-lg font-bold rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading ? (
-                            <div className="flex items-center justify-center gap-2">
+                            <div className="flex items-center justify-center gap-3">
                                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                <span>Ingresando...</span>
+                                <span>Iniciando...</span>
                             </div>
                         ) : (
-                            "INGRESAR"
+                            "Iniciar Sesión"
                         )}
                     </button>
                 </form>
-
-                {/* Footer */}
-                <div className="mt-8 text-center">
-                    <p className="text-sm text-gray-400">
-                        Panel Administrativo Herbalife Clubes
-                    </p>
-                </div>
             </div>
         </div>
     );
