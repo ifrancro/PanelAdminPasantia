@@ -1,18 +1,59 @@
 /**
  * 📊 reportService.js
- * Servicio para generar reportes en PDF usando jsPDF (frontend only)
- * Soporta filtros por: clubId y/o fechaFiltro (YYYY-MM-DD)
+ * Servicio para generar reportes en PDF corporativos usando jsPDF
  */
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getAllMembresiasByClub } from './MembresiaService';
 import api from '../api/api';
 
+// ─── Data Fetchers (Exported for UI Preview) ───────────────────────────────
+
+export const fetchMembresiasForReport = async (clubId = null, fechaFiltro = null) => {
+    let membresias = [];
+    if (clubId) {
+        const response = await getAllMembresiasByClub(clubId);
+        membresias = response.data;
+    } else {
+        const clubesResponse = await api.get('/clubes');
+        const clubes = clubesResponse.data.filter(c => c.estado === 'ACTIVO');
+        const allPromises = clubes.map(club => getAllMembresiasByClub(club.id).catch(() => ({ data: [] })));
+        const allResponses = await Promise.all(allPromises);
+        membresias = allResponses.flatMap(r => r.data);
+    }
+
+    if (fechaFiltro) {
+        membresias = membresias.filter(m => {
+            if (!m.fechaRegistro) return false;
+            return m.fechaRegistro.startsWith(fechaFiltro);
+        });
+    }
+    return membresias;
+};
+
+export const fetchAsistenciasForReport = async (clubId = null, fechaFiltro = null) => {
+    let asistencias = [];
+    if (clubId) {
+        const response = await api.get(`/asistencias/club/${clubId}`);
+        asistencias = response.data;
+    } else {
+        const clubesResponse = await api.get('/clubes');
+        const clubes = clubesResponse.data.filter(c => c.estado === 'ACTIVO');
+        const allPromises = clubes.map(club =>
+            api.get(`/asistencias/club/${club.id}`).catch(() => ({ data: [] }))
+        );
+        const allResponses = await Promise.all(allPromises);
+        asistencias = allResponses.flatMap(r => r.data);
+    }
+
+    if (fechaFiltro) {
+        asistencias = asistencias.filter(a => a.fechaDia === fechaFiltro);
+    }
+    return asistencias;
+};
+
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-/**
- * Formatea 'YYYY-MM-DD' → 'DD/MM/YYYY'
- */
 const formatLocalDate = (isoDate) => {
     if (!isoDate) return 'N/A';
     const parts = String(isoDate).split('-');
@@ -21,239 +62,211 @@ const formatLocalDate = (isoDate) => {
 };
 
 /**
- * Dibuja el encabezado estándar de un reporte
- * @returns {number} Y position after header
+ * Estilo Corporativo / Ejecutivo
  */
-const drawHeader = (doc, titulo, generado, filtros) => {
-    // Logo / franja verde
-    doc.setFillColor(124, 179, 66);
-    doc.rect(0, 0, 210, 12, 'F');
+const drawCorporateHeader = (doc, titulo, generado, filtros) => {
+    // Fondo oscuro premium para la cabecera
+    doc.setFillColor(30, 41, 59); // Slate-800
+    doc.rect(0, 0, 210, 24, 'F');
 
-    doc.setFontSize(16);
+    // Título Principal
+    doc.setFontSize(18);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(255, 255, 255);
-    doc.text(titulo, 105, 8.5, { align: 'center' });
+    doc.text(titulo.toUpperCase(), 15, 12);
 
-    // Reset color
-    doc.setTextColor(40, 40, 40);
+    // Fecha Generación
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(148, 163, 184); // Slate-400
+    doc.text(`Generado el: ${generado}`, 15, 18);
 
+    // Bloque de Filtros
+    let startY = 32;
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(51, 65, 85); // Slate-700
+    doc.text('PARÁMETROS DEL INFORME', 15, startY);
+    
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(226, 232, 240); // Slate-200
+    doc.line(15, startY + 2, 195, startY + 2);
+
+    startY += 8;
     doc.setFontSize(9);
     doc.setFont(undefined, 'normal');
-    doc.text(`Generado: ${generado}`, 14, 18);
+    doc.setTextColor(71, 85, 105); // Slate-600
 
-    let y = 18;
-    if (filtros.length > 0) {
-        y += 6;
-        doc.setFontSize(8.5);
-        doc.setTextColor(80, 80, 80);
-        filtros.forEach((f, i) => {
-            doc.text(f, 14, 18 + 6 * (i + 1));
+    if (filtros.length === 0) {
+        doc.text('Todos los registros', 15, startY);
+        startY += 6;
+    } else {
+        filtros.forEach(f => {
+            doc.text(`• ${f}`, 15, startY);
+            startY += 6;
         });
-        y = 18 + 6 * (filtros.length + 1);
-        doc.setTextColor(40, 40, 40);
     }
 
-    return y + 4;
+    return startY + 5;
 };
 
-/**
- * Agrega pie de página en todas las hojas
- */
 const addFooter = (doc) => {
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
-        doc.setFontSize(7.5);
-        doc.setFont(undefined, 'italic');
-        doc.setTextColor(120, 120, 120);
+        doc.setFillColor(248, 250, 252); // Slate-50
+        doc.rect(0, 287, 210, 10, 'F');
+        doc.setFontSize(7);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(148, 163, 184); // Slate-400
         doc.text(
-            `Herbalife Clubes — Sistema de Gestión   |   Pág. ${i} / ${pageCount}`,
+            `Sistema Integral de Gestión Herbalife  |  Documento Confidencial  |  Página ${i} de ${pageCount}`,
             105,
-            doc.internal.pageSize.height - 8,
+            293,
             { align: 'center' }
         );
     }
 };
 
-// ─── Membresías ────────────────────────────────────────────────────────────
+// ─── Generadores ───────────────────────────────────────────────────────────
 
-/**
- * Genera reporte de membresías en PDF
- * @param {string|null} clubId    - Filtrar por club ID
- * @param {string|null} fechaFiltro - Filtrar por fecha de registro 'YYYY-MM-DD'
- * @param {string|null} clubNombre  - Nombre del club seleccionado (para el header)
- */
-export const generateMembresiaReport = async (clubId = null, fechaFiltro = null, clubNombre = null) => {
-    try {
-        let membresias = [];
-        if (clubId) {
-            const response = await getAllMembresiasByClub(clubId);
-            membresias = response.data;
-        } else {
-            const clubesResponse = await api.get('/clubes');
-            const clubes = clubesResponse.data.filter(c => c.estado === 'ACTIVO');
-            const allPromises = clubes.map(club => getAllMembresiasByClub(club.id).catch(() => ({ data: [] })));
-            const allResponses = await Promise.all(allPromises);
-            membresias = allResponses.flatMap(r => r.data);
-        }
+export const generateMembresiaReport = async (membresias, chartImage = null, clubNombre = null, fechaFiltro = null) => {
+    const doc = new jsPDF();
+    const generado = new Date().toLocaleString('es-ES');
 
-        // ── Filtrar por fecha de registro si se proporciona ──
-        if (fechaFiltro) {
-            membresias = membresias.filter(m => {
-                if (!m.fechaRegistro) return false;
-                // fechaRegistro es LocalDateTime → 'YYYY-MM-DDTHH:mm:ss'
-                return m.fechaRegistro.startsWith(fechaFiltro);
-            });
-        }
+    const filtros = [];
+    if (clubNombre) filtros.push(`Sede / Club: ${clubNombre}`);
+    if (fechaFiltro) filtros.push(`Fecha de Registro: ${formatLocalDate(fechaFiltro)}`);
 
-        const doc = new jsPDF();
-        const generado = new Date().toLocaleString('es-ES');
+    let startY = drawCorporateHeader(doc, 'Reporte Ejecutivo de Membresías', generado, filtros);
 
-        const filtros = [];
-        if (clubNombre) filtros.push(`Club: ${clubNombre}`);
-        if (fechaFiltro) filtros.push(`Fecha de registro: ${formatLocalDate(fechaFiltro)}`);
-        if (!clubNombre && !fechaFiltro) filtros.push('Sin filtros aplicados (todos los clubes y fechas)');
+    // Kpis Summary
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(15, 23, 42); // Slate-900
+    doc.text(`Total de registros: ${membresias.length}`, 15, startY);
+    startY += 6;
 
-        const startY = drawHeader(doc, 'REPORTE DE MEMBRESÍAS', generado, filtros);
-
-        // Totalizador
-        doc.setFontSize(10);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(40, 40, 40);
-        doc.text(`Total de membresías: ${membresias.length}`, 14, startY + 2);
-
-        if (membresias.length === 0) {
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'italic');
-            doc.setTextColor(150, 150, 150);
-            doc.text('No se encontraron membresías para los filtros seleccionados.', 105, startY + 14, { align: 'center' });
-        } else {
-            const tableData = membresias.map(m => [
-                m.id,
-                m.usuarioNombre || 'N/A',
-                m.clubNombre || 'N/A',
-                m.nivelNombre || 'Básico',
-                m.estado || 'N/A',
-                m.fechaRegistro ? formatLocalDate(m.fechaRegistro.split('T')[0]) : 'N/A',
-            ]);
-
-            autoTable(doc, {
-                startY: startY + 8,
-                head: [['ID', 'Usuario', 'Club', 'Nivel', 'Estado', 'F. Registro']],
-                body: tableData,
-                theme: 'grid',
-                headStyles: { fillColor: [124, 179, 66], fontSize: 9, fontStyle: 'bold' },
-                bodyStyles: { fontSize: 8.5 },
-                alternateRowStyles: { fillColor: [245, 250, 240] },
-            });
-        }
-
-        addFooter(doc);
-        doc.save(`reporte_membresias_${fechaFiltro || 'todas'}_${Date.now()}.pdf`);
-        return true;
-    } catch (error) {
-        console.error('Error generando reporte de membresías:', error);
-        throw new Error('No se pudo generar el reporte de membresías');
+    // Inject Chart Image
+    if (chartImage) {
+        // Asume un chart de 800x400 approx (proporción 2:1)
+        const imgWidth = 180;
+        const imgHeight = 70; 
+        
+        // Marco sutil para el gráfico
+        doc.setDrawColor(226, 232, 240);
+        doc.setFillColor(252, 253, 253);
+        doc.roundedRect(15, startY, imgWidth, imgHeight + 4, 2, 2, 'FD');
+        
+        doc.addImage(chartImage, 'PNG', 15, startY + 2, imgWidth, imgHeight);
+        startY += imgHeight + 12;
     }
+
+    if (membresias.length === 0) {
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'italic');
+        doc.text('No se encontraron registros para estos parámetros.', 105, startY + 10, { align: 'center' });
+    } else {
+        const tableData = membresias.map(m => [
+            m.id,
+            m.usuarioNombre || 'N/A',
+            m.clubNombre || 'N/A',
+            m.nivelNombre || 'Básico',
+            m.estado || 'N/A',
+            m.fechaRegistro ? formatLocalDate(m.fechaRegistro.split('T')[0]) : 'N/A',
+        ]);
+
+        autoTable(doc, {
+            startY: startY,
+            head: [['ID', 'USUARIO', 'CLUB / SEDE', 'NIVEL', 'ESTADO', 'REGISTRO']],
+            body: tableData,
+            theme: 'grid',
+            headStyles: { fillColor: [30, 41, 59], textColor: 255, fontSize: 8, fontStyle: 'bold', halign: 'center' },
+            bodyStyles: { fontSize: 8, textColor: 50 },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
+            columnStyles: {
+                0: { halign: 'center', cellWidth: 15 },
+                4: { halign: 'center' },
+                5: { halign: 'center' }
+            },
+            margin: { left: 15, right: 15 }
+        });
+    }
+
+    addFooter(doc);
+    doc.save(`Reporte_Ejecutivo_Membresias_${Date.now()}.pdf`);
 };
 
-// ─── Asistencias ───────────────────────────────────────────────────────────
+export const generateAsistenciasReport = async (asistencias, chartImage = null, clubNombre = null, fechaFiltro = null) => {
+    const doc = new jsPDF();
+    const generado = new Date().toLocaleString('es-ES');
 
-/**
- * Genera reporte de asistencias en PDF
- * AsistenciaDTO: id, membresiaId, membresiaNumeroSocio, clubId, clubNombre,
- *                fechaHora (LocalDateTime), fechaDia (LocalDate), estado, rachaActual, rachaMaxima
- *
- * @param {string|null} clubId     - Filtrar por club ID
- * @param {string|null} fechaFiltro  - Filtrar por fecha exacta 'YYYY-MM-DD'
- * @param {string|null} clubNombre   - Nombre del club seleccionado (para el header)
- */
-export const generateAsistenciasReport = async (clubId = null, fechaFiltro = null, clubNombre = null) => {
-    try {
-        let asistencias = [];
-        if (clubId) {
-            const response = await api.get(`/asistencias/club/${clubId}`);
-            asistencias = response.data;
-        } else {
-            const clubesResponse = await api.get('/clubes');
-            const clubes = clubesResponse.data.filter(c => c.estado === 'ACTIVO');
-            const allPromises = clubes.map(club =>
-                api.get(`/asistencias/club/${club.id}`).catch(() => ({ data: [] }))
-            );
-            const allResponses = await Promise.all(allPromises);
-            asistencias = allResponses.flatMap(r => r.data);
-        }
+    const filtros = [];
+    if (clubNombre) filtros.push(`Sede / Club: ${clubNombre}`);
+    if (fechaFiltro) filtros.push(`Fecha: ${formatLocalDate(fechaFiltro)}`);
 
-        // ── Filtrar por fecha exacta (fechaDia = 'YYYY-MM-DD') ──
-        if (fechaFiltro) {
-            asistencias = asistencias.filter(a => a.fechaDia === fechaFiltro);
-        }
+    let startY = drawCorporateHeader(doc, 'Reporte Ejecutivo de Asistencias', generado, filtros);
 
-        const doc = new jsPDF();
-        const generado = new Date().toLocaleString('es-ES');
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(`Total de asistencias registradas: ${asistencias.length}`, 15, startY);
+    startY += 6;
 
-        const filtros = [];
-        if (clubNombre) filtros.push(`Club: ${clubNombre}`);
-        if (fechaFiltro) filtros.push(`Fecha: ${formatLocalDate(fechaFiltro)}`);
-        if (!clubNombre && !fechaFiltro) filtros.push('Sin filtros aplicados (todos los clubes y fechas)');
-
-        const startY = drawHeader(doc, 'REPORTE DE ASISTENCIAS', generado, filtros);
-
-        doc.setFontSize(10);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(40, 40, 40);
-        doc.text(`Total de asistencias: ${asistencias.length}`, 14, startY + 2);
-
-        if (asistencias.length === 0) {
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'italic');
-            doc.setTextColor(150, 150, 150);
-            doc.text('No se encontraron asistencias para los filtros seleccionados.', 105, startY + 14, { align: 'center' });
-        } else {
-            const tableData = asistencias.map(a => {
-                // fechaDia: 'YYYY-MM-DD'
-                const fechaFmt = formatLocalDate(a.fechaDia);
-
-                // fechaHora: 'YYYY-MM-DDTHH:mm:ss' → extraer hora
-                let horaFmt = 'N/A';
-                if (a.fechaHora) {
-                    const dt = new Date(a.fechaHora);
-                    if (!isNaN(dt.getTime())) {
-                        horaFmt = dt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                    }
-                }
-
-                return [
-                    a.id,
-                    a.membresiaNumeroSocio || `Membresía #${a.membresiaId}`,
-                    a.clubNombre || 'N/A',
-                    fechaFmt,
-                    horaFmt,
-                    a.estado || 'N/A',
-                    a.rachaActual ?? '-',
-                ];
-            });
-
-            autoTable(doc, {
-                startY: startY + 8,
-                head: [['ID', 'N° Socio', 'Club', 'Fecha', 'Hora', 'Estado', 'Racha']],
-                body: tableData,
-                theme: 'grid',
-                headStyles: { fillColor: [124, 179, 66], fontSize: 9, fontStyle: 'bold' },
-                bodyStyles: { fontSize: 8 },
-                alternateRowStyles: { fillColor: [245, 250, 240] },
-                columnStyles: {
-                    0: { cellWidth: 10 },
-                    6: { cellWidth: 16 },
-                },
-            });
-        }
-
-        addFooter(doc);
-        doc.save(`reporte_asistencias_${fechaFiltro || 'todas'}_${Date.now()}.pdf`);
-        return true;
-    } catch (error) {
-        console.error('Error generando reporte de asistencias:', error);
-        throw new Error('No se pudo generar el reporte de asistencias');
+    // Inject Chart Image
+    if (chartImage) {
+        const imgWidth = 180;
+        const imgHeight = 70; 
+        
+        doc.setDrawColor(226, 232, 240);
+        doc.setFillColor(252, 253, 253);
+        doc.roundedRect(15, startY, imgWidth, imgHeight + 4, 2, 2, 'FD');
+        
+        doc.addImage(chartImage, 'PNG', 15, startY + 2, imgWidth, imgHeight);
+        startY += imgHeight + 12;
     }
+
+    if (asistencias.length === 0) {
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'italic');
+        doc.text('No se encontraron registros para estos parámetros.', 105, startY + 10, { align: 'center' });
+    } else {
+        const tableData = asistencias.map(a => {
+            const fechaFmt = formatLocalDate(a.fechaDia);
+            let horaFmt = 'N/A';
+            if (a.fechaHora) {
+                const dt = new Date(a.fechaHora);
+                if (!isNaN(dt.getTime())) {
+                    horaFmt = dt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                }
+            }
+            return [
+                a.id,
+                a.membresiaNumeroSocio || `#${a.membresiaId}`,
+                a.clubNombre || 'N/A',
+                `${fechaFmt} ${horaFmt}`,
+                a.estado || 'N/A',
+                a.rachaActual ?? '-',
+            ];
+        });
+
+        autoTable(doc, {
+            startY: startY,
+            head: [['ID', 'SOCIO', 'CLUB / SEDE', 'FECHA Y HORA', 'ESTADO', 'RACHA']],
+            body: tableData,
+            theme: 'grid',
+            headStyles: { fillColor: [30, 41, 59], textColor: 255, fontSize: 8, fontStyle: 'bold', halign: 'center' },
+            bodyStyles: { fontSize: 8, textColor: 50 },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
+            columnStyles: {
+                0: { halign: 'center', cellWidth: 15 },
+                4: { halign: 'center' },
+                5: { halign: 'center', cellWidth: 20 }
+            },
+            margin: { left: 15, right: 15 }
+        });
+    }
+
+    addFooter(doc);
+    doc.save(`Reporte_Ejecutivo_Asistencias_${Date.now()}.pdf`);
 };

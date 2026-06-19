@@ -13,6 +13,7 @@
     "@headlessui/react": "^2.2.9",
     "@xyflow/react": "^12.11.0",
     "axios": "^1.13.2",
+    "html2canvas": "^1.4.1",
     "jspdf": "^4.1.0",
     "jspdf-autotable": "^5.0.7",
     "leaflet": "^1.9.4",
