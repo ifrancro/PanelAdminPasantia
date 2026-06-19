@@ -11,6 +11,7 @@ import { ArrowLeft, Save, Package, CloudUpload } from "lucide-react";
 import Swal from "sweetalert2";
 import { getProductoById, createProducto, updateProducto, subirImagenProducto } from "../../services/ProductoService";
 import { useAuth } from "../../context/AuthContext";
+import { getFullImageUrl } from "../../utils/imageUtils";
 
 export default function ProductoForm() {
     const { user } = useAuth();
@@ -69,6 +70,7 @@ export default function ProductoForm() {
     };
 
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [localPreview, setLocalPreview] = useState(null);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -82,6 +84,10 @@ export default function ProductoForm() {
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
+
+        // Generar vista previa local inmediata
+        const objectUrl = URL.createObjectURL(file);
+        setLocalPreview(objectUrl);
 
         setUploadingImage(true);
         try {
@@ -97,6 +103,7 @@ export default function ProductoForm() {
         } catch (error) {
             console.error("Error al subir imagen:", error);
             Swal.fire("Error", "No se pudo subir la imagen", "error");
+            setLocalPreview(null); // Revertir si falla
         } finally {
             setUploadingImage(false);
         }
@@ -232,9 +239,17 @@ export default function ProductoForm() {
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                             disabled={uploadingImage}
                         />
-                        {formData.imagenUrl ? (
+                        {(localPreview || formData.imagenUrl) ? (
                             <div className="absolute inset-0 w-full h-full p-2">
-                                <img src={formData.imagenUrl} alt="Vista previa" className="w-full h-full object-contain bg-white rounded-lg" />
+                                <img 
+                                    src={localPreview || getFullImageUrl(formData.imagenUrl)} 
+                                    alt="Vista previa" 
+                                    className="w-full h-full object-contain bg-white rounded-lg"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiB2aWV3Qm94PSIwIDAgNDAwIDMwMCI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNmM2Y0ZjYiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZW4gbm8gZGlzcG9uaWJsZTwvdGV4dD48L3N2Zz4=';
+                                    }}
+                                />
                                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded-xl">
                                     <p className="text-white font-medium flex items-center gap-2">
                                         <CloudUpload className="w-5 h-5" />

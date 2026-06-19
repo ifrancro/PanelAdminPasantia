@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Pencil, Package, Power, PowerOff, CheckCircle, XCircle, Clock, Building2 } from "lucide-react";
 import Swal from "sweetalert2";
+import { getFullImageUrl } from "../../utils/imageUtils";
 import {
     getAllProductos,
     activarProducto,
@@ -356,8 +357,13 @@ export default function ProductoList() {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     {producto.imagenUrl ? (
-                                                        <img src={producto.imagenUrl} alt={producto.nombre}
-                                                            className="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0" />
+                                                        <img src={getFullImageUrl(producto.imagenUrl)} alt={producto.nombre}
+                                                            className="w-10 h-10 rounded-lg object-contain bg-white border border-gray-200 flex-shrink-0"
+                                                            onError={(e) => {
+                                                                e.target.onerror = null;
+                                                                e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9IiNmM2Y0ZjYiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5OL0E8L3RleHQ+PC9zdmc+';
+                                                            }}
+                                                        />
                                                     ) : (
                                                         <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg flex items-center justify-center flex-shrink-0">
                                                             <Package className="w-5 h-5 text-orange-600" />
@@ -562,8 +568,13 @@ export default function ProductoList() {
                                                     <td className="px-5 py-4">
                                                         <div className="flex items-center gap-3">
                                                             {prod.imagenUrl ? (
-                                                                <img src={prod.imagenUrl} alt={prod.nombre}
-                                                                    className="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0" />
+                                                                <img src={getFullImageUrl(prod.imagenUrl)} alt={prod.nombre}
+                                                                    className="w-10 h-10 rounded-lg object-contain bg-white border border-gray-200 flex-shrink-0"
+                                                                    onError={(e) => {
+                                                                        e.target.onerror = null;
+                                                                        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9IiNmM2Y0ZjYiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5OL0E8L3RleHQ+PC9zdmc+';
+                                                                    }}
+                                                                />
                                                             ) : (
                                                                 <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
                                                                     <Package className="w-5 h-5 text-orange-500" />
