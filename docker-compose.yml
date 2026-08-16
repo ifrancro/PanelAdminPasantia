@@ -1,0 +1,18 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      TZ: America/La_Paz
+    networks:
+      default:
+      net-web:
+        aliases:
+        - misterquillo-misterquillo-web
+networks:
+  default:
+    external: false
+  net-web:
+    name: network-web
+    external: true
