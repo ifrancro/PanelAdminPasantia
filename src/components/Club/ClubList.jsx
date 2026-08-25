@@ -101,7 +101,7 @@ export default function ClubList() {
 
         if (motivo) {
             try {
-                await rechazarClub(id);
+                await rechazarClub(id, motivo);
                 Swal.fire("Rechazado", "El club ha sido rechazado", "info");
                 fetchClubes();
             } catch (error) {

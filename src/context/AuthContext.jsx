@@ -28,15 +28,14 @@ export const AuthProvider = ({ children }) => {
             try {
                 api.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
 
-                if (storedUser) {
-                    setUser(JSON.parse(storedUser));
-                    setToken(storedToken);
-                    setLoading(false);
-                    return;
+                // Siempre validar el token contra el backend para mayor seguridad
+                // (VULN-REACT-03: No confiar ciegamente en localStorage.user)
+                const res = await api.get("/auth/me");
+                
+                if (res.data.rolNombre !== "ADMIN") {
+                    throw new Error("Rol no autorizado para el panel administrativo");
                 }
 
-                // Obtener perfil actualizado
-                const res = await api.get("/auth/me");
                 setUser(res.data);
                 localStorage.setItem("user", JSON.stringify(res.data));
                 setToken(storedToken);

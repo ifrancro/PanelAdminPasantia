@@ -7,7 +7,7 @@ import Swal from "sweetalert2";
  * Backend: main-limpia (Render)
  */
 const api = axios.create({
-    baseURL: "https://clubs-api.onrender.com/api",
+    baseURL: import.meta.env.VITE_API_URL || "https://clubs-api.onrender.com/api",
     headers: {
         "Content-Type": "application/json",
     },

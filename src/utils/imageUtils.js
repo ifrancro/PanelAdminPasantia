@@ -9,8 +9,9 @@ export const getFullImageUrl = (url) => {
         return url;
     }
 
-    // Backend base URL (Render)
-    const baseUrl = "https://clubs-api.onrender.com";
+    // Backend base URL (derive from VITE_API_URL)
+    const apiUrl = import.meta.env.VITE_API_URL || "https://clubs-api.onrender.com/api";
+    const baseUrl = apiUrl.replace(/\/api$/, "");
     
     // Asegurarse de que haya un / entre el base URL y la ruta de la imagen
     return url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;

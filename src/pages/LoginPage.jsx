@@ -61,32 +61,38 @@ export default function LoginPage() {
 
         try {
             const response = await api.post("/auth/login", {
-                email: email.trim(),
+                email: email.trim().toLowerCase(),
                 password: password.trim(),
             });
 
-            const { token } = response.data;
+            const {
+                token,
+                userId,
+                email: userEmail,
+                nombre,
+                apellido,
+                rolNombre,
+            } = response.data;
 
-            // Obtener datos del usuario
-            api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-            const userResponse = await api.get("/auth/me");
-            const userData = userResponse.data;
-
-            // 🔒 Validar que el usuario sea ADMIN o ANFITRION
-            const userRole = userData.rol?.nombre?.toUpperCase();
-            if (userRole !== "ADMIN" && userRole !== "ANFITRION") {
-                // Limpiar token si no es autorizado
-                delete api.defaults.headers.common["Authorization"];
-
+            // 🔒 Validar que el usuario sea ADMIN
+            if (rolNombre !== "ADMIN") {
                 Swal.fire({
                     icon: "error",
                     title: "Acceso denegado",
-                    text: "Este panel es exclusivo para administradores y anfitriones",
+                    text: "Este panel es exclusivo para administradores",
                     confirmButtonColor: "#1B5E20",
                 });
                 setLoading(false);
                 return;
             }
+
+            const userData = {
+                userId,
+                email: userEmail,
+                nombre,
+                apellido,
+                rolNombre,
+            };
 
             login(token, userData);
 

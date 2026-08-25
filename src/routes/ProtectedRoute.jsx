@@ -19,8 +19,8 @@ export default function ProtectedRoute({ children }) {
         );
     }
 
-    // Si no hay token ni usuario, redirige al login
-    if (!token || !user) {
+    // Si no hay token ni usuario, o no es ADMIN, redirige al login
+    if (!token || !user || user.rolNombre !== "ADMIN") {
         return <Navigate to="/login" replace />;
     }
 

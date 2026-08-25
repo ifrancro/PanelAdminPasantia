@@ -49,7 +49,7 @@ export default function ReportsPage() {
                 clubesActivos = clubesActivos.filter(c => 
                     c.usuarioId === user?.id || 
                     c.anfitrionId === user?.id || 
-                    (c.anfitrionNombre && user?.nombre && c.anfitrionNombre.toLowerCase().includes(user.nombre.toLowerCase()))
+                    (c.anfitrionNombre && user?.nombre && c.anfitrionNombre.toLowerCase() === user.nombre.toLowerCase())
                 );
             }
 
