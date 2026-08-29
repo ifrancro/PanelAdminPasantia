@@ -7,7 +7,7 @@ import { useAuth } from "../context/AuthContext";
  * Protege rutas que requieren autenticación
  */
 export default function ProtectedRoute({ children }) {
-    const { user, loading, token } = useAuth();
+    const { user, loading, isAuthenticated } = useAuth();
 
     // Mostrar loading mientras verifica sesión
     if (loading) {
@@ -19,8 +19,7 @@ export default function ProtectedRoute({ children }) {
         );
     }
 
-    // Si no hay token ni usuario, redirige al login
-    if (!token || !user) {
+    if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
 
