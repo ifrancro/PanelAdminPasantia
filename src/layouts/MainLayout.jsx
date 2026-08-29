@@ -1,36 +1,25 @@
 import React from "react";
-import { Outlet, useLocation, Navigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { useAuth } from "../context/AuthContext";
+import { getRole, ROLES } from "../utils/roles";
 
 /**
- * 🏗️ MainLayout
- * Layout principal con Sidebar y Header
+ * 🏗️ MainLayout — shell del panel; no decide autorización por ruta.
  */
 export default function MainLayout() {
     const { user } = useAuth();
-    const location = useLocation();
+    const userRole = getRole(user);
 
-    const userRole = user?.rol?.nombre?.toUpperCase();
-
-    // Guard de rutas para el rol ANFITRION: solo tiene acceso a Dashboard (/), Clubes (/clubes), Productos (/productos) y Asistencias (/asistencias)
-    if (userRole === "ANFITRION") {
-        const allowedPaths = ["", "clubes", "productos", "asistencias"];
-        const currentRootPath = location.pathname.split("/")[1]; // ej: /productos/create -> "productos"
-        
-        if (!allowedPaths.includes(currentRootPath)) {
-            return <Navigate to="/" replace />;
-        }
-    }
+    const roleLabel = userRole === ROLES.ADMIN
+        ? "Administrador"
+        : userRole || "Usuario";
 
     return (
         <div className="flex h-screen bg-gray-100">
-            {/* Sidebar */}
             <Sidebar />
 
-            {/* Contenido principal */}
             <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Header */}
                 <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
                     <div className="flex items-center justify-between">
                         <div>
@@ -47,7 +36,7 @@ export default function MainLayout() {
                                     {user?.nombre} {user?.apellido}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                    {user?.rol?.nombre || "Administrador"}
+                                    {roleLabel}
                                 </p>
                             </div>
                             <div className="w-10 h-10 bg-gradient-to-br from-herbalife-light to-herbalife-green rounded-full flex items-center justify-center text-white font-semibold">
@@ -57,7 +46,6 @@ export default function MainLayout() {
                     </div>
                 </header>
 
-                {/* Área de contenido */}
                 <main className="flex-1 overflow-y-auto p-6">
                     <Outlet />
                 </main>
