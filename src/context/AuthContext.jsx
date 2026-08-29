@@ -13,12 +13,27 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     /**
+     * 🔴 Logout: limpia sesión
+     */
+    function logout(redirect = true) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        delete api.defaults.headers.common["Authorization"];
+        setUser(null);
+        setToken(null);
+
+        if (redirect) window.location.href = "/login";
+    }
+
+    /**
      * 🔄 Al montar, restaura sesión desde localStorage
+     * Ignora el resultado si el token cambió (login nuevo mientras /auth/me volaba).
      */
     useEffect(() => {
+        let cancelled = false;
+
         const checkAuth = async () => {
             const storedToken = localStorage.getItem("token");
-            const storedUser = localStorage.getItem("user");
 
             if (!storedToken) {
                 setLoading(false);
@@ -28,27 +43,40 @@ export const AuthProvider = ({ children }) => {
             try {
                 api.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
 
-                if (storedUser) {
-                    setUser(JSON.parse(storedUser));
-                    setToken(storedToken);
-                    setLoading(false);
+                // Siempre validar el token contra el backend para mayor seguridad
+                // (VULN-REACT-03: No confiar ciegamente en localStorage.user)
+                const res = await api.get("/auth/me");
+
+                if (cancelled || localStorage.getItem("token") !== storedToken) {
                     return;
                 }
 
-                // Obtener perfil actualizado
-                const res = await api.get("/auth/me");
+                if (res.data.rolNombre !== "ADMIN") {
+                    throw new Error("Rol no autorizado para el panel administrativo");
+                }
+
                 setUser(res.data);
                 localStorage.setItem("user", JSON.stringify(res.data));
                 setToken(storedToken);
             } catch (err) {
-                console.warn("⚠️ Sesión inválida:", err);
+                if (cancelled || localStorage.getItem("token") !== storedToken) {
+                    return;
+                }
+                const status = err?.response?.status;
+                console.warn("Sesión inválida:", status ?? "sin status");
                 logout(false);
             } finally {
-                setLoading(false);
+                if (!cancelled) {
+                    setLoading(false);
+                }
             }
         };
 
         checkAuth();
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
     /**
@@ -59,27 +87,15 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem("token", newToken);
             api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
             setToken(newToken);
+            setLoading(false);
 
             if (userData) {
                 setUser(userData);
                 localStorage.setItem("user", JSON.stringify(userData));
             }
-        } catch (err) {
-            console.error("Error al guardar sesión:", err);
+        } catch {
+            console.error("Error al guardar sesión");
         }
-    };
-
-    /**
-     * 🔴 Logout: limpia sesión
-     */
-    const logout = (redirect = true) => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        delete api.defaults.headers.common["Authorization"];
-        setUser(null);
-        setToken(null);
-
-        if (redirect) window.location.href = "/login";
     };
 
     return (

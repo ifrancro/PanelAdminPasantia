@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, LogIn } from "lucide-react";
 import Swal from "sweetalert2";
 import api from "../api/api";
 import { useAuth } from "../context/AuthContext";
@@ -41,11 +40,11 @@ export default function LoginPage() {
             }
         }
 
-        // Password - requerido y longitud mínima
-        if (!password.trim()) {
+        // Password: vacío se valida sin mutar el valor enviado
+        if (password.trim().length === 0) {
             errorsCopy.password = "La contraseña es requerida";
             valid = false;
-        } else if (password.trim().length < 6) {
+        } else if (password.length < 6) {
             errorsCopy.password = "La contraseña debe tener al menos 6 caracteres";
             valid = false;
         } else {
@@ -61,32 +60,38 @@ export default function LoginPage() {
 
         try {
             const response = await api.post("/auth/login", {
-                email: email.trim(),
-                password: password.trim(),
+                email: email.trim().toLowerCase(),
+                password,
             });
 
-            const { token } = response.data;
+            const {
+                token,
+                userId,
+                email: userEmail,
+                nombre,
+                apellido,
+                rolNombre,
+            } = response.data;
 
-            // Obtener datos del usuario
-            api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-            const userResponse = await api.get("/auth/me");
-            const userData = userResponse.data;
-
-            // 🔒 Validar que el usuario sea ADMIN o ANFITRION
-            const userRole = userData.rol?.nombre?.toUpperCase();
-            if (userRole !== "ADMIN" && userRole !== "ANFITRION") {
-                // Limpiar token si no es autorizado
-                delete api.defaults.headers.common["Authorization"];
-
+            // 🔒 Validar que el usuario sea ADMIN
+            if (rolNombre !== "ADMIN") {
                 Swal.fire({
                     icon: "error",
                     title: "Acceso denegado",
-                    text: "Este panel es exclusivo para administradores y anfitriones",
+                    text: "Este panel es exclusivo para administradores",
                     confirmButtonColor: "#1B5E20",
                 });
                 setLoading(false);
                 return;
             }
+
+            const userData = {
+                userId,
+                email: userEmail,
+                nombre,
+                apellido,
+                rolNombre,
+            };
 
             login(token, userData);
 
@@ -101,7 +106,7 @@ export default function LoginPage() {
 
             navigate("/");
         } catch (error) {
-            console.error("Error de login:", error);
+            // No loguear el error de Axios: puede incluir password y Authorization
 
             // Manejo específico de errores según código HTTP
             let errorTitle = "Error de autenticación";
