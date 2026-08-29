@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, LogIn } from "lucide-react";
 import Swal from "sweetalert2";
 import api from "../api/api";
 import { useAuth } from "../context/AuthContext";
@@ -41,11 +40,11 @@ export default function LoginPage() {
             }
         }
 
-        // Password - requerido y longitud mínima
-        if (!password.trim()) {
+        // Password: vacío se valida sin mutar el valor enviado
+        if (password.trim().length === 0) {
             errorsCopy.password = "La contraseña es requerida";
             valid = false;
-        } else if (password.trim().length < 6) {
+        } else if (password.length < 6) {
             errorsCopy.password = "La contraseña debe tener al menos 6 caracteres";
             valid = false;
         } else {
@@ -62,7 +61,7 @@ export default function LoginPage() {
         try {
             const response = await api.post("/auth/login", {
                 email: email.trim().toLowerCase(),
-                password: password.trim(),
+                password,
             });
 
             const {
@@ -107,7 +106,7 @@ export default function LoginPage() {
 
             navigate("/");
         } catch (error) {
-            console.error("Error de login:", error);
+            // No loguear el error de Axios: puede incluir password y Authorization
 
             // Manejo específico de errores según código HTTP
             let errorTitle = "Error de autenticación";

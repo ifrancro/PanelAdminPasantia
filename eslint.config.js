@@ -26,4 +26,11 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    files: ['**/*.test.{js,jsx}'],
+    rules: {
+      // Los tests no son módulos de Vite HMR; no exportan componentes de app.
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])
