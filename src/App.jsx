@@ -11,7 +11,7 @@
  * - Comunicación: Eventos
  * - Soporte: Tickets
  */
-import React, { Suspense, lazy } from "react";
+import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -29,20 +29,22 @@ import MainLayout from "./layouts/MainLayout";
 import LoginPage from "./pages/LoginPage";
 
 // Páginas protegidas - Fase 1
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const ClubPage = lazy(() => import("./pages/ClubPage"));
-const ProductoPage = lazy(() => import("./pages/ProductoPage"));
-const NivelSocioPage = lazy(() => import("./pages/NivelSocioPage"));
+import Dashboard from "./pages/Dashboard";         // ✅ Con datos reales
+import ClubPage from "./pages/ClubPage";           // ✅ Fase 1
+// HubPage removido - gestión eliminada
+import ProductoPage from "./pages/ProductoPage";   // ✅ Fase 1
+import NivelSocioPage from "./pages/NivelSocioPage"; // ✅ Fase 1
 
 // Páginas protegidas - Fase 2
-const UsuarioPage = lazy(() => import("./pages/UsuarioPage"));
-const EventoPage = lazy(() => import("./pages/EventoPage"));
+import UsuarioPage from "./pages/UsuarioPage";     // ✅ Fase 2
+import EventoPage from "./pages/EventoPage";       // ✅ Fase 2
+// NotificacionPage removido - funcionalidad eliminada
 
 // Páginas protegidas - Fase 3
-const SoportePage = lazy(() => import("./pages/SoportePage"));
-const AsistenciaPage = lazy(() => import("./pages/AsistenciaPage"));
-const MembresiaPage = lazy(() => import("./pages/MembresiaPage"));
-const ReportsPage = lazy(() => import("./pages/Reports/ReportsPage"));
+import SoportePage from "./pages/SoportePage";     // ✅ Fase 3
+import AsistenciaPage from "./pages/AsistenciaPage"; // ✅ Fase 3
+import MembresiaPage from "./pages/MembresiaPage"; // ✅ Fase 3
+import ReportsPage from "./pages/Reports/ReportsPage"; // ✅ Reportes
 
 import "./index.css";
 
@@ -59,9 +61,7 @@ export default function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-herbalife-green"></div></div>}>
-                  <MainLayout />
-                </Suspense>
+                <MainLayout />
               </ProtectedRoute>
             }
           >
@@ -102,4 +102,16 @@ export default function App() {
   );
 }
 
-
+/**
+ * Componente temporal para rutas pendientes de implementación
+ */
+function PlaceholderPage({ title }) {
+  return (
+    <div className="bg-white rounded-xl p-8 shadow-md">
+      <h1 className="text-2xl font-bold text-gray-800 mb-2">{title}</h1>
+      <p className="text-gray-500">
+        Esta sección se implementará próximamente.
+      </p>
+    </div>
+  );
+}

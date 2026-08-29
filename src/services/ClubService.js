@@ -28,8 +28,8 @@ export const aprobarClub = async (id) => {
 /**
  * Rechazar un club (PENDIENTE -> RECHAZADO)
  */
-export const rechazarClub = async (id, motivo) => {
-    return await api.patch(`/clubes/${id}/rechazar`, { motivo });
+export const rechazarClub = async (id) => {
+    return await api.patch(`/clubes/${id}/rechazar`);
 };
 
 /**
