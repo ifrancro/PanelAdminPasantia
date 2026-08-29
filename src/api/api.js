@@ -1,5 +1,11 @@
 import axios from "axios";
 import Swal from "sweetalert2";
+import {
+    isAuthLoginRequest,
+    isOnLoginPage,
+    shouldHandleSessionExpired,
+    stripAuthorizationHeader,
+} from "./authGuards";
 
 /**
  * 🌐 API Instance
@@ -15,9 +21,14 @@ const api = axios.create({
 
 /**
  * 🔑 Request Interceptor
- * Agrega el token JWT a cada petición
+ * Bearer en endpoints autenticados. Nunca en POST /auth/login.
  */
 api.interceptors.request.use((config) => {
+    if (isAuthLoginRequest(config)) {
+        stripAuthorizationHeader(config);
+        return config;
+    }
+
     const token = localStorage.getItem("token");
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -27,22 +38,26 @@ api.interceptors.request.use((config) => {
 
 /**
  * 🚨 Response Interceptor
- * Maneja errores globales (401 = sesión expirada)
+ * 401 de /auth/login → credenciales (lo maneja LoginPage).
+ * 401 autenticado → sesión expirada, salvo request stale o loop en /login.
  */
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response && error.response.status === 401) {
-            Swal.fire({
-                icon: "warning",
-                title: "Sesión expirada",
-                text: "Por favor inicia sesión nuevamente",
-                confirmButtonColor: "#1B5E20",
-            }).then(() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                window.location.href = "/login";
-            });
+        if (shouldHandleSessionExpired(error)) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+
+            if (!isOnLoginPage()) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Sesión expirada",
+                    text: "Por favor inicia sesión nuevamente",
+                    confirmButtonColor: "#1B5E20",
+                }).then(() => {
+                    window.location.href = "/login";
+                });
+            }
         }
         return Promise.reject(error);
     }
