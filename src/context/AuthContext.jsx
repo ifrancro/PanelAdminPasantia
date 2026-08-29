@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/api";
+import { isPanelRole } from "../utils/roles";
 
 /**
  * 🔐 AuthContext
@@ -51,7 +52,7 @@ export const AuthProvider = ({ children }) => {
                     return;
                 }
 
-                if (res.data.rolNombre !== "ADMIN") {
+                if (!isPanelRole(res.data)) {
                     throw new Error("Rol no autorizado para el panel administrativo");
                 }
 
