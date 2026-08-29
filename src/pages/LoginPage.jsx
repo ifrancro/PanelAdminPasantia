@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import api from "../api/api";
 import { useAuth } from "../context/AuthContext";
+import { isPanelRole } from "../utils/roles";
 
 /**
  * 🔐 LoginPage
@@ -73,8 +74,16 @@ export default function LoginPage() {
                 rolNombre,
             } = response.data;
 
-            // 🔒 Validar que el usuario sea ADMIN
-            if (rolNombre !== "ADMIN") {
+            // 🔒 Validar rol permitido en el panel (solo ADMIN por ahora)
+            const userData = {
+                userId,
+                email: userEmail,
+                nombre,
+                apellido,
+                rolNombre,
+            };
+
+            if (!isPanelRole(userData)) {
                 Swal.fire({
                     icon: "error",
                     title: "Acceso denegado",
@@ -84,14 +93,6 @@ export default function LoginPage() {
                 setLoading(false);
                 return;
             }
-
-            const userData = {
-                userId,
-                email: userEmail,
-                nombre,
-                apellido,
-                rolNombre,
-            };
 
             login(token, userData);
 
