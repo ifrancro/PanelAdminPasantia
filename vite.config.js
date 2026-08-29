@@ -10,5 +10,10 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true, // Fail if port is in use
-  }
+  },
+  test: {
+    environment: 'jsdom',
+    restoreMocks: true,
+    setupFiles: ['./vitest.setup.js'],
+  },
 })
