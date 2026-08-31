@@ -71,7 +71,7 @@ export default function ClubList() {
             text: `¿Deseas aprobar "${nombre}"? El solicitante se convertirá en anfitrión.`,
             icon: "question",
             showCancelButton: true,
-            confirmButtonColor: "#1B5E20",
+            confirmButtonColor: "#0E1B31",
             confirmButtonText: "Sí, aprobar",
             cancelButtonText: "Cancelar",
         });

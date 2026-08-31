@@ -9,7 +9,7 @@ import {
 
 /**
  * 🌐 API Instance
- * Axios configurado para el backend de Herbalife Clubes
+ * Axios configurado para el backend de Expande
  * Backend: main-limpia (Render)
  */
 const api = axios.create({
@@ -53,7 +53,7 @@ api.interceptors.response.use(
                     icon: "warning",
                     title: "Sesión expirada",
                     text: "Por favor inicia sesión nuevamente",
-                    confirmButtonColor: "#1B5E20",
+                    confirmButtonColor: "#0E1B31",
                 }).then(() => {
                     window.location.href = "/login";
                 });

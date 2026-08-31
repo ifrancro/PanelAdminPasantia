@@ -4,10 +4,11 @@ import Swal from "sweetalert2";
 import api from "../api/api";
 import { useAuth } from "../context/AuthContext";
 import { isPanelRole } from "../utils/roles";
+import expandeLogo from "../assets/expande-logo.png";
 
 /**
  * 🔐 LoginPage
- * Pantalla de inicio de sesión con estilo Herbalife
+ * Pantalla de inicio de sesión — colores intactos a pedido, solo cambia la marca.
  */
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -176,9 +177,9 @@ export default function LoginPage() {
             {/* Overlay sutil para oscurecer la imagen y que resalte la tarjeta */}
             <div className="absolute inset-0 bg-black/20"></div>
 
-            {/* Header NutriClub */}
+            {/* Header Expande */}
             <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-center bg-white/30 backdrop-blur-md border-b border-white/20">
-                <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">NutriClub</h1>
+                <img src={expandeLogo} alt="Expande" className="h-8 w-auto" />
             </div>
 
             {/* Card de Login */}

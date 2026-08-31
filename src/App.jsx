@@ -1,6 +1,6 @@
 /**
  * 🚀 App.jsx
- * Router principal del panel administrativo Herbalife
+ * Router principal del panel administrativo Expande
  */
 import React from "react";
 import {
