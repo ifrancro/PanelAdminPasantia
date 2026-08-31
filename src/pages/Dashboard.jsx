@@ -121,7 +121,7 @@ export default function Dashboard() {
                         <TrendingUp className="w-6 h-6 text-herbalife-green" />
                         Dashboard Analítico
                     </h1>
-                    <p className="text-sm text-gray-500 mt-1 font-semibold uppercase tracking-wider">Métricas Actuales del Sistema Herbalife</p>
+                    <p className="text-sm text-gray-500 mt-1 font-semibold uppercase tracking-wider">Métricas Actuales del Sistema</p>
                 </div>
             </div>
 
