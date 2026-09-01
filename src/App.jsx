@@ -17,6 +17,7 @@ import { routeConfig } from "./routes/routeConfig";
 
 import MainLayout from "./layouts/MainLayout";
 import LoginPage from "./pages/LoginPage";
+import DescargaAppPage from "./pages/DescargaApp/DescargaAppPage";
 
 import "./index.css";
 
@@ -26,6 +27,16 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+
+          {/*
+           * Landing pública del QR de instalación de la app móvil.
+           * Ruta poco descubrible y SIN autenticación: la abre quien escanea el QR.
+           * No afecta al resto del panel ni a su login.
+           */}
+          <Route
+            path="/expande/app/descarga-oficial"
+            element={<DescargaAppPage />}
+          />
 
           <Route
             path="/"
