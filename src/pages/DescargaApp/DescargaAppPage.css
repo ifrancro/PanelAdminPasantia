@@ -1,0 +1,168 @@
+/**
+ * Landing pública "Descargar la app" (QR de instalación).
+ * Ruta: /expande/app/descarga-oficial  ·  Sin autenticación.
+ * Estilos aislados con el prefijo .expdl-  para no chocar con el panel.
+ */
+.expdl-page {
+  --expdl-navy: #12263f;
+  --expdl-blue: #2f80ed;
+  --expdl-green: #57b947;
+  --expdl-grey: #6b7a90;
+  --expdl-line: #e7ecf3;
+  --expdl-page-bg: #f4f7fb;
+  --expdl-shadow: 0 20px 60px rgba(18, 38, 63, 0.1);
+  --expdl-grad: linear-gradient(120deg, var(--expdl-green), var(--expdl-blue));
+
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  background: var(--expdl-page-bg);
+  color: var(--expdl-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 16px;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.expdl-page * { box-sizing: border-box; }
+
+.expdl-card {
+  background: #fff;
+  width: 100%;
+  max-width: 430px;
+  border-radius: 24px;
+  box-shadow: var(--expdl-shadow);
+  padding: 40px 32px 28px;
+  text-align: center;
+}
+
+.expdl-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.expdl-logo img {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+.expdl-hero {
+  position: relative;
+  height: 210px;
+  margin: 8px 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.expdl-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(2px);
+  opacity: 0.5;
+}
+.expdl-blob-1 { width: 150px; height: 150px; background: #dbe9fb; left: 28px; top: 20px; }
+.expdl-blob-2 { width: 130px; height: 130px; background: #e2f1da; right: 30px; bottom: 10px; }
+
+.expdl-phone {
+  position: relative;
+  width: 108px;
+  height: 200px;
+  background: var(--expdl-navy);
+  border-radius: 22px;
+  padding: 8px;
+  box-shadow: 0 18px 35px rgba(18, 38, 63, 0.25);
+  z-index: 2;
+}
+.expdl-screen {
+  background: #fff;
+  width: 100%;
+  height: 100%;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.expdl-screen img { width: 74%; height: auto; display: block; }
+
+.expdl-dl-badge {
+  position: absolute;
+  right: 30px;
+  bottom: 6px;
+  width: 54px;
+  height: 54px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 10px 25px rgba(18, 38, 63, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+.expdl-title {
+  font-size: 27px;
+  line-height: 1.25;
+  font-weight: 800;
+  margin: 0 0 14px;
+}
+.expdl-accent {
+  background: var(--expdl-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.expdl-subtitle {
+  color: var(--expdl-grey);
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 0 0 24px;
+}
+
+.expdl-stores { display: flex; flex-direction: column; gap: 14px; }
+.expdl-store-btn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--expdl-line);
+  border-left: 4px solid var(--expdl-blue);
+  border-radius: 14px;
+  padding: 14px 16px;
+  text-align: left;
+  text-decoration: none;
+  color: var(--expdl-navy);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.expdl-store-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(18, 38, 63, 0.12);
+}
+.expdl-store-btn.expdl-android { border-left-color: var(--expdl-green); }
+.expdl-store-btn .expdl-icon { width: 34px; display: flex; justify-content: center; flex-shrink: 0; }
+.expdl-store-btn .expdl-label { flex: 1; }
+.expdl-store-btn .expdl-label small { display: block; font-size: 12px; color: var(--expdl-grey); font-weight: 500; }
+.expdl-store-btn .expdl-label strong { font-size: 18px; font-weight: 700; }
+.expdl-store-btn .expdl-chev { color: var(--expdl-blue); flex-shrink: 0; }
+.expdl-store-btn.expdl-android .expdl-chev { color: var(--expdl-green); }
+
+.expdl-security {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 26px 0 18px;
+  color: var(--expdl-grey);
+  font-size: 13px;
+}
+
+.expdl-footer {
+  border-top: 1px solid var(--expdl-line);
+  padding-top: 16px;
+  color: var(--expdl-grey);
+  font-size: 12.5px;
+}
