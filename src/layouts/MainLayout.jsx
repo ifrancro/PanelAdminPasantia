@@ -27,7 +27,7 @@ export default function MainLayout() {
                                 Panel Administrativo
                             </h1>
                             <p className="text-sm text-gray-500">
-                                Herbalife Clubes
+                                Expande
                             </p>
                         </div>
                         <div className="flex items-center gap-4">

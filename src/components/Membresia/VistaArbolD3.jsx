@@ -234,7 +234,7 @@ export default function VistaArbolD3({ arbol, searchTerm = "" }) {
                 <Controls showInteractive={false} />
                 <MiniMap 
                     nodeColor={(n) => {
-                        return n.data.nivel === 0 ? '#1B5E20' : '#E2E8F0';
+                        return n.data.nivel === 0 ? '#0E1B31' : '#E2E8F0';
                     }} 
                     maskColor="rgba(240, 240, 240, 0.6)"
                     className="rounded-lg overflow-hidden border border-gray-200 shadow-sm"

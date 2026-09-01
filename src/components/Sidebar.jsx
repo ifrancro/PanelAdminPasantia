@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { getSidebarSections } from "../routes/routeConfig";
+import expandeIcono from "../assets/expande-icono.png";
 
 /**
  * 📑 Sidebar — navegación derivada de routeConfig (WEB-AUTH-002).
@@ -15,11 +16,9 @@ export default function Sidebar() {
         <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
             <div className="px-6 py-5 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-herbalife-light to-herbalife-green rounded-xl flex items-center justify-center">
-                        <span className="text-white font-bold text-lg">H</span>
-                    </div>
+                    <img src={expandeIcono} alt="Expande" className="w-10 h-10 object-contain" />
                     <div>
-                        <h1 className="text-lg font-bold text-gray-800">NutriClub</h1>
+                        <h1 className="text-lg font-bold text-gray-800">Expande</h1>
                         <p className="text-xs text-gray-500">Panel Admin</p>
                     </div>
                 </div>

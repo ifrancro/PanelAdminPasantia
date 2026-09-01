@@ -120,7 +120,7 @@ const addFooter = (doc) => {
         doc.setFont(undefined, 'normal');
         doc.setTextColor(148, 163, 184); // Slate-400
         doc.text(
-            `Sistema Integral de Gestión Herbalife  |  Documento Confidencial  |  Página ${i} de ${pageCount}`,
+            `Expande · Sistema Integral de Gestión  |  Documento Confidencial  |  Página ${i} de ${pageCount}`,
             105,
             293,
             { align: 'center' }
